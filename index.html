@@ -36,19 +36,9 @@
   ::-webkit-scrollbar-thumb:hover { background: #059669; }
   .badge-discount { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); }
   .glass-header { background: rgba(255, 255, 255, 0.92); backdrop-filter: blur(12px); }
-  /* Plain-CSS fallback for Tailwind's `.hidden` utility. The whole app's
-     show/hide toggling (modals, QR area, empty states, mobile menu, etc.)
-     uses the `hidden` class. Tailwind's CDN build normally supplies this
-     rule, but if that CDN is ever slow/blocked, every toggle would silently
-     stop working and elements would stay visible. Defining it ourselves
-     guarantees hide/show behavior regardless of network conditions. */
   .hidden { display: none; }
   .page-view.hidden { display: none; }
   .modal-backdrop.hidden { display: none; }
-  /* Fallback for the responsive `md:` breakpoint (768px) Tailwind normally
-     supplies. Without it, the plain `.hidden` rule above would leave the
-     main desktop navigation permanently hidden (with no way to un-hide it)
-     whenever Tailwind's CDN fails to load — a full navigation outage. */
   @media (min-width: 768px) {
     .nav-desktop { display: flex !important; }
     .mobile-menu-toggle-btn { display: none !important; }
@@ -59,8 +49,6 @@
   .reader-prose img { border-radius: 1rem; margin: 1rem 0; }
   .spinner { border: 3px solid #d1fae5; border-top-color: #10b981; border-radius: 50%; width: 24px; height: 24px; animation: spin 0.8s linear infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }
-  /* Inline SVG icon system — no external icon font, so icons can never
-     render as broken "tofu" squares regardless of network conditions. */
   .icon-svg { width: 1em; height: 1em; vertical-align: -0.125em; flex-shrink: 0; }
 </style>
 </head>
@@ -133,6 +121,8 @@
 
   <!-- HOME -->
   <section id="page-home" class="page-view space-y-10">
+    <div id="diagnostic-banner" class="hidden rounded-2xl border-2 border-rose-300 bg-rose-50 p-4 text-sm text-rose-800"></div>
+
     <div class="relative rounded-3xl bg-gradient-to-r from-emerald-800 via-emerald-700 to-teal-800 text-white p-8 md:p-12 overflow-hidden shadow-xl shadow-emerald-900/10">
       <div class="absolute -right-10 -bottom-10 w-72 h-72 bg-emerald-500/20 rounded-full blur-3xl pointer-events-none"></div>
       <div class="absolute right-20 top-0 w-48 h-48 bg-teal-400/20 rounded-full blur-2xl pointer-events-none"></div>
@@ -160,6 +150,7 @@
         <h2 class="text-xl font-bold text-slate-800 flex items-center space-x-2"><i data-icon="trending" class="text-emerald-600"></i><span>นิยายแนะนำ</span></h2>
       </div>
       <div id="featured-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"></div>
+      <p id="home-empty" class="hidden text-center text-slate-400 py-12"><i data-icon="inbox" class="text-3xl mb-2 block"></i>ยังไม่มีนิยายในระบบตอนนี้</p>
     </div>
   </section>
 
@@ -451,8 +442,7 @@
   </div>
 </div>
 
-<!-- AUTH MODAL — เข้าสู่ระบบ/สมัครสมาชิกผ่าน Supabase Auth จริง ใช้บัญชีเดียวกันทั้งนักอ่านและแอดมิน
-     (แอดมินคือบัญชีปกติที่มี role='admin' ในตาราง profiles) -->
+<!-- AUTH MODAL -->
 <div id="auth-modal" class="modal-backdrop hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
   <div class="bg-white rounded-3xl max-w-sm w-full p-8 shadow-2xl">
     <div class="flex justify-between items-center mb-4">
@@ -482,7 +472,7 @@
   </div>
 </div>
 
-<!-- POLICY MODAL — เงื่อนไขการให้บริการ / นโยบายการคืนเงิน (ดูจากปุ่มใน footer) -->
+<!-- POLICY MODAL -->
 <div id="policy-modal" class="modal-backdrop hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 overflow-y-auto">
   <div class="bg-white rounded-3xl max-w-2xl w-full p-8 shadow-2xl my-8">
     <div class="flex justify-between items-center mb-4">
@@ -519,20 +509,13 @@
 /* =========================================================
    นิยายหลังบ้าน — เชื่อมต่อฐานข้อมูลจริงผ่าน Supabase (Auth + Postgres + Realtime)
    และชำระเงินจริงผ่าน Beam Checkout PromptPay (ผ่าน Supabase Edge Functions)
-   ดูวิธีตั้งค่าทั้งหมดใน README.md ที่แนบมาด้วย
    ========================================================= */
 
-// ---------- SUPABASE CONFIG — ใส่ค่าจริงของโปรเจกต์คุณตรงนี้ ----------
-// หาได้จาก Supabase Dashboard > Project Settings > API
-// SUPABASE_ANON_KEY เป็นคีย์สาธารณะ ฝังในหน้าเว็บได้อย่างปลอดภัย (ถูกจำกัดสิทธิ์ด้วย RLS อยู่แล้ว)
-// ห้ามใส่ service_role key หรือ Beam API key ที่นี่โดยเด็ดขาด — สองตัวนั้นอยู่ฝั่ง Edge Function เท่านั้น
 const SUPABASE_URL = 'https://tuyiwlkeneyhrxnkjrfd.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR1eWl3bGtlbmV5aHJ4bmtqcmZkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODkzNjI1NTksImV4cCI6MjEwNDkzODU1OX0.cCEf5nczpDHGscVNW96JTpjXQA-GBIi8eX5NpsqANa4';
 
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// ---------- ICONS (inline SVG — no external icon font, so an icon can
-// never render as a broken "tofu" square regardless of network state) ----------
 const ICON_PATHS = {
   home: '<polyline points="9 22 9 12 15 12 15 22"></polyline><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"></path>',
   book: '<path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z"></path><path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z"></path>',
@@ -587,8 +570,6 @@ function replaceStaticIcons() {
   });
 }
 
-// ---------- COVER IMAGES (generated placeholders — never depend on an
-// external image host, so a cover can never fail to render) ----------
 const GENRE_COVER_COLORS = {
   'โรแมนติก': ['#f9a8d4', '#db2777'],
   'แฟนตาซี': ['#c4b5fd', '#7c3aed'],
@@ -619,18 +600,17 @@ function handleCoverImgError(imgEl, genre) {
   imgEl.src = createPlaceholderCoverDataUri(genre);
 }
 
-// ---------- STATE ----------
-let novels = [];         // โหลดจากตาราง novels + เมทาดาต้าตอนจาก RPC (ไม่มีเนื้อหาจนกว่าจะเปิดอ่าน)
-let coinPackages = [];   // โหลดจากตาราง coin_packages
+let novels = [];
+let coinPackages = [];
 let likedNovelIds = new Set();
 
-let currentUser = null;      // supabase auth user
-let currentProfile = null;   // แถวจากตาราง profiles { id, display_name, role, coins }
+let currentUser = null;
+let currentProfile = null;
 let isAdmin = false;
 let pendingAdminRedirect = false;
 
-let salesOrdersCache = []; // สำหรับหน้าสถิติแอดมิน (มาจากตาราง orders)
-let adminChaptersCache = []; // ตอนทั้งหมด (รวมเนื้อหา) ของนิยายที่กำลังเปิดจัดการอยู่ในหน้าแอดมิน
+let salesOrdersCache = [];
+let adminChaptersCache = [];
 
 let currentReaderNovelId = null;
 let currentChapterIndex = 0;
@@ -644,12 +624,30 @@ let currentOrderId = null;
 let orderRealtimeChannel = null;
 let orderPollInterval = null;
 
-// ---------- DATA LOADING (Supabase) ----------
+// ---------- DIAGNOSTIC BANNER — โชว์ error บนหน้าเว็บตรงๆ ไม่ต้องเปิด Console ----------
+function showDiagnostic(html) {
+  const el = document.getElementById('diagnostic-banner');
+  if (!el) return;
+  el.innerHTML = html;
+  el.classList.remove('hidden');
+}
+function clearDiagnostic() {
+  const el = document.getElementById('diagnostic-banner');
+  if (!el) return;
+  el.classList.add('hidden');
+  el.innerHTML = '';
+}
+
 async function loadNovels() {
   const { data, error } = await supabase.from('novels').select('*').order('created_at', { ascending: false });
   if (error) {
     console.error('loadNovels error:', error);
     showToast('โหลดข้อมูลนิยายไม่สำเร็จ ตรวจสอบการตั้งค่า Supabase', 'error');
+    showDiagnostic(
+      `<b>โหลดนิยายไม่สำเร็จ (มี error จาก Supabase)</b><br>
+       รหัส: ${error.code || '-'} · ${error.message || 'ไม่ทราบสาเหตุ'}<br>
+       <span class="text-xs">สาเหตุที่พบบ่อย: URL/ANON_KEY ในไฟล์นี้ผิด หรือยังไม่ได้รัน setup.sql บนโปรเจกต์นี้</span>`
+    );
     novels = [];
     return;
   }
@@ -660,14 +658,31 @@ async function loadNovels() {
     status: n.status, cover: n.cover_url || createPlaceholderCoverDataUri(n.genre),
     synopsis: n.synopsis || '', chapters: []
   }));
+  if (novels.length === 0) {
+    showDiagnostic(
+      `<b>เชื่อมต่อ Supabase สำเร็จ แต่ไม่พบนิยายเลย (0 แถว)</b><br>
+       <span class="text-xs">เช็ค 2 จุด: (1) ตาราง novels มีข้อมูลจริงไหมใน Table Editor
+       (2) รัน setup.sql ครบทั้งไฟล์แล้วหรือยัง — ถ้ายังไม่ครบ ตาราง novels อาจถูก RLS
+       บล็อกไม่ให้ใครอ่านได้เลยแม้จะมีข้อมูลอยู่จริง เพราะยังไม่มี policy อนุญาตให้อ่าน</span>`
+    );
+  } else {
+    clearDiagnostic();
+  }
   await refreshAllChaptersMeta();
 }
 
-// ดึงเมทาดาต้าของ "ทุกตอนของทุกเรื่อง" ในครั้งเดียว (ไม่มี content) พร้อมสถานะ unlocked
-// ของผู้ใช้ปัจจุบัน — ใช้แสดงป้ายราคา/ล็อก/จำนวนตอนในหน้า home, catalog, bookshelf
 async function refreshAllChaptersMeta() {
   const { data, error } = await supabase.rpc('get_all_chapters_meta');
-  if (error) { console.error('refreshAllChaptersMeta error:', error); return; }
+  if (error) {
+    console.error('refreshAllChaptersMeta error:', error);
+    showDiagnostic(
+      `<b>โหลดรายการตอนไม่สำเร็จ</b><br>
+       รหัส: ${error.code || '-'} · ${error.message || 'ไม่ทราบสาเหตุ'}<br>
+       <span class="text-xs">มักเกิดจากยังไม่ได้สร้างฟังก์ชัน get_all_chapters_meta — เช็คว่ารัน setup.sql
+       ครบทั้งไฟล์ (ไม่ใช่แค่ส่วนข้อมูลตัวอย่าง) บนโปรเจกต์นี้แล้วหรือยัง</span>`
+    );
+    return;
+  }
   const byNovel = {};
   (data || []).forEach(c => {
     if (!byNovel[c.novel_id]) byNovel[c.novel_id] = [];
@@ -676,7 +691,6 @@ async function refreshAllChaptersMeta() {
   novels.forEach(n => { n.chapters = (byNovel[n.id] || []).sort((a, b) => a.number - b.number); });
 }
 
-// รีเฟรชเมทาดาต้าตอนของนิยายเรื่องเดียว (เร็วกว่า หลังจากซื้อตอน/แก้ไขตอน)
 async function refreshNovelChapters(novelId) {
   const { data, error } = await supabase.rpc('get_novel_chapters', { p_novel_id: novelId });
   if (error) { console.error('refreshNovelChapters error:', error); return; }
@@ -707,7 +721,6 @@ async function loadUserLibrary() {
   likedNovelIds = new Set((data || []).map(r => r.novel_id));
 }
 
-// ---------- AUTH ----------
 function setAuthError(form, msg) {
   const el = document.getElementById(`${form}-error`);
   if (!el) return;
@@ -750,7 +763,6 @@ function openAuthModal(tab = 'login') {
   document.getElementById('auth-modal').classList.remove('hidden');
 }
 
-// ---------- POLICY MODAL (เงื่อนไขการให้บริการ / นโยบายการคืนเงิน) ----------
 function switchPolicyTab(tab) {
   const termsTab = document.getElementById('policy-tab-terms');
   const refundTab = document.getElementById('policy-tab-refund');
@@ -863,7 +875,6 @@ function initAuthListener() {
   });
 }
 
-// ---------- INIT ----------
 document.addEventListener('DOMContentLoaded', async () => {
   replaceStaticIcons();
   initAuthListener();
@@ -875,7 +886,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   showToast('ยินดีต้อนรับสู่นิยายหลังบ้าน 🌿', 'success');
 });
 
-// ---------- NAVIGATION ----------
 function navigateTo(pageId) {
   if (pageId === 'admin' && !(currentUser && isAdmin)) {
     if (!currentUser) { pendingAdminRedirect = true; openAuthModal('login'); }
@@ -901,8 +911,6 @@ function navigateTo(pageId) {
 
 function toggleMobileMenu() { document.getElementById('mobile-menu').classList.toggle('hidden'); }
 
-// ---------- ADMIN NAV / ACCESS ----------
-// nav-admin ปุ่มเดียวใช้ทั้งเปิดหน้าแอดมิน (ถ้าล็อกอินเป็นแอดมินแล้ว) และเปิดหน้าเข้าสู่ระบบ (ถ้ายัง)
 function handleAdminNavClick() {
   if (currentUser && isAdmin) { navigateTo('admin'); return; }
   if (currentUser && !isAdmin) { showToast('บัญชีนี้ไม่มีสิทธิ์แอดมิน', 'warning'); return; }
@@ -929,7 +937,6 @@ function updateAdminUIState() {
   if (footerLoggedIn) footerLoggedIn.style.display = loggedInAsAdmin ? '' : 'none';
 }
 
-// ---------- PRICING HELPERS (per-chapter pricing) ----------
 function getNovelPriceInfo(novel) {
   if (!novel.chapters || novel.chapters.length === 0) {
     return { label: 'ยังไม่มีตอน', min: novel.pricePerChapter || 0, max: novel.pricePerChapter || 0, allFree: false };
@@ -941,7 +948,6 @@ function getNovelPriceInfo(novel) {
   return { label, min, max, allFree: false };
 }
 
-// ---------- HOME ----------
 function renderHome() {
   const genres = Array.from(new Set(novels.map(n => n.genre)));
   document.getElementById('genre-pills').innerHTML = genres.map(g => `
@@ -950,6 +956,7 @@ function renderHome() {
 
   const featured = [...novels].sort((a, b) => b.rating - a.rating).slice(0, 4);
   document.getElementById('featured-grid').innerHTML = featured.map(createNovelCardHTML).join('');
+  document.getElementById('home-empty').classList.toggle('hidden', novels.length > 0);
 }
 
 function goToGenre(genre) {
@@ -957,7 +964,6 @@ function goToGenre(genre) {
   setTimeout(() => { document.getElementById('filter-genre').value = genre; applyFilters(); }, 0);
 }
 
-// ---------- CATALOG ----------
 function updateGenreFilterDropdown() {
   const select = document.getElementById('filter-genre');
   const current = select.value;
@@ -1033,7 +1039,6 @@ function hasAccess(_novelId, chapter) {
   return !!chapter.unlocked;
 }
 
-// ---------- BOOKSHELF / LIKES ----------
 async function toggleLikeNovel(novelId) {
   if (!currentUser) { showToast('กรุณาเข้าสู่ระบบก่อนกดถูกใจ', 'warning'); openAuthModal('login'); return; }
 
@@ -1106,7 +1111,6 @@ function renderBookshelf(tab) {
   document.getElementById('bookshelf-empty').classList.toggle('hidden', items.length > 0);
 }
 
-// ---------- READER ----------
 function openNovelReader(novelId) {
   const novel = novels.find(n => n.id === novelId);
   if (!novel) return;
@@ -1119,7 +1123,6 @@ function openNovelReader(novelId) {
   currentReaderNovelId = novelId;
   currentChapterIndex = 0;
 
-  // นับยอดวิว (fire-and-forget ไม่บล็อก UI)
   novel.viewCount = (novel.viewCount || 0) + 1;
   supabase.rpc('increment_view_count', { p_novel_id: novelId }).then(({ error }) => { if (error) console.warn('increment_view_count:', error); });
 
@@ -1164,7 +1167,6 @@ async function renderChapterBody() {
     contentEl.style.fontSize = readerFontSize + 'px';
     contentEl.innerHTML = `<div class="spinner mx-auto my-8"></div>`;
     const { data, error } = await supabase.rpc('get_chapter_content', { p_chapter_id: chapter.id });
-    // เผื่อผู้ใช้กดเปลี่ยนตอนระหว่างที่กำลังโหลด — ตรวจว่ายังอยู่ตอนเดิมก่อนเขียนผล
     const stillSameChapter = novels.find(n => n.id === currentReaderNovelId)?.chapters[currentChapterIndex]?.id === chapter.id;
     if (!stillSameChapter) return;
     if (error) {
@@ -1223,7 +1225,6 @@ async function purchaseChapter() {
   showToast(`ปลดล็อก "${chapter.title}" สำเร็จ!`, 'success');
 }
 
-// ---------- ADMIN: TABS ----------
 function switchAdminTab(tab) {
   ['stats', 'novels', 'packages'].forEach(t => {
     const btn = document.getElementById(`admin-tab-${t}`);
@@ -1234,7 +1235,6 @@ function switchAdminTab(tab) {
   if (tab === 'stats') initSalesStats();
 }
 
-// ---------- ADMIN: NOVELS ----------
 function renderAdminNovelsTable() {
   const tbody = document.getElementById('admin-novels-table');
   tbody.innerHTML = novels.map(n => `
@@ -1370,9 +1370,6 @@ async function deleteNovel(novelId) {
   showToast('ลบนิยายเรียบร้อยแล้ว', 'success');
 }
 
-// ---------- ADMIN: CHAPTER MANAGER ----------
-// แอดมินมีสิทธิ์อ่าน/เขียนตาราง chapters ได้เต็ม (RLS อนุญาตเฉพาะ role='admin')
-// จึงดึงข้อมูลตรงจากตาราง (รวม content) แทนการใช้ RPC แบบสาธารณะ
 async function openChapterManager(novelId) {
   const novel = novels.find(n => n.id === novelId);
   if (!novel) return;
@@ -1415,7 +1412,7 @@ function editChapterInModal(chapterId) {
   const chapter = adminChaptersCache.find(c => c.id === chapterId);
   if (!chapter) return;
   document.getElementById('chapter-form-heading').textContent = `แก้ไขตอนที่ ${chapter.number}`;
-  document.getElementById('chapter-form-chapter-number').value = chapter.id; // เก็บ uuid ของตอน (ไม่ใช่เลขตอน)
+  document.getElementById('chapter-form-chapter-number').value = chapter.id;
   document.getElementById('chapter-form-title').value = chapter.title;
   document.getElementById('chapter-form-content').value = chapter.content;
   document.getElementById('chapter-form-free').checked = !!chapter.is_free;
@@ -1481,7 +1478,7 @@ async function saveChapterForm(e) {
   const novel = novels.find(n => n.id === chapterManagerNovelId);
   if (!novel) return;
 
-  const chapterId = document.getElementById('chapter-form-chapter-number').value; // uuid ถ้ากำลังแก้ไข, '' ถ้าเพิ่มใหม่
+  const chapterId = document.getElementById('chapter-form-chapter-number').value;
   const title = document.getElementById('chapter-form-title').value.trim();
   const content = document.getElementById('chapter-form-content').value.trim();
   const isFree = document.getElementById('chapter-form-free').checked;
@@ -1516,7 +1513,6 @@ async function deleteChapterInModal(chapterId) {
   showToast('ลบตอนเรียบร้อยแล้ว', 'success');
 }
 
-// ---------- ADMIN: COIN PACKAGES ----------
 function renderAdminCoinPackages() {
   document.getElementById('coin-packages-list').innerHTML = coinPackages.map(pkg => `
     <div class="bg-gradient-to-br from-emerald-50 to-emerald-100 p-6 rounded-2xl border border-emerald-300 hover:shadow-lg transition-all">
@@ -1580,7 +1576,6 @@ async function deleteCoinPackage(packageId) {
   showToast('ลบชุดเหรียญเรียบร้อยแล้ว', 'success');
 }
 
-// ---------- ADMIN: SALES STATS (มาจากตาราง orders จริง) ----------
 async function initSalesStats() {
   const { data, error } = await supabase.from('orders').select('*').order('created_at', { ascending: false });
   if (error) { console.error('initSalesStats error:', error); showToast('โหลดข้อมูลยอดขายไม่สำเร็จ', 'error'); salesOrdersCache = []; }
@@ -1659,7 +1654,6 @@ function exportSalesTableCSV() {
   showToast('ดาวน์โหลด CSV เรียบร้อยแล้ว', 'success');
 }
 
-// ---------- TOP UP / PAYMENT (Beam Checkout PromptPay ผ่าน Supabase Edge Function) ----------
 function openTopUpModal() {
   if (!currentUser) { showToast('กรุณาเข้าสู่ระบบก่อนเติมเหรียญ', 'warning'); openAuthModal('login'); return; }
   document.getElementById('coin-packages-modal').innerHTML = coinPackages.filter(p => p.active !== false).map(pkg => `
@@ -1738,7 +1732,6 @@ async function startPromptPayQR() {
 function subscribeOrderStatus(orderId) {
   unsubscribeOrderStatus();
 
-  // Realtime: อัปเดตทันทีที่ webhook ของ Beam เติมเหรียญสำเร็จ
   orderRealtimeChannel = supabase.channel(`order-${orderId}`)
     .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'orders', filter: `id=eq.${orderId}` }, (payload) => {
       if (payload.new.status === 'paid') handleOrderPaid(payload.new);
@@ -1748,7 +1741,6 @@ function subscribeOrderStatus(orderId) {
     })
     .subscribe();
 
-  // สำรอง: เผื่อ Realtime/webhook ยังไม่มา ให้ poll เบาๆ ทุก 4 วิ
   orderPollInterval = setInterval(async () => {
     const { data } = await supabase.from('orders').select('*').eq('id', orderId).single();
     if (data?.status === 'paid') handleOrderPaid(data);
@@ -1770,8 +1762,6 @@ async function handleOrderPaid(order) {
   if (!document.getElementById('page-reader').classList.contains('hidden')) renderChapterBody();
 }
 
-// ปุ่ม "ฉันชำระเงินแล้ว / เช็คสถานะ" — บังคับให้ Edge Function เช็คสถานะจริงกับ Beam ทันที
-// (เผื่อ Realtime/webhook ยังไม่ทำงานหรือยังตั้งค่าไม่เสร็จ)
 async function confirmQrPayment() {
   if (!currentOrderId) return;
   showToast('กำลังตรวจสอบสถานะการชำระเงิน...', 'info');
@@ -1803,8 +1793,6 @@ function cancelQrPayment() {
 function downloadQRCode() {
   const img = document.getElementById('qr-image');
   if (!img || !img.src) return;
-  // รูป QR จาก Beam เป็น data: URI (base64) ฝังตรงในหน้าเว็บอยู่แล้ว ไม่ใช่ลิงก์ภายนอกแบบ Omise เดิม
-  // จึงดาวน์โหลดได้ปกติทุกเบราว์เซอร์ ไม่มีปัญหาเรื่อง cross-origin
   const link = document.createElement('a');
   link.download = `promptpay-qr-${qrPaymentRef || 'order'}.png`;
   link.href = img.src;
@@ -1813,7 +1801,6 @@ function downloadQRCode() {
   link.click();
 }
 
-// ---------- MODAL HELPERS ----------
 function closeModal(id) {
   document.getElementById(id).classList.add('hidden');
   if (id === 'payment-modal') {
@@ -1831,13 +1818,11 @@ window.addEventListener('click', (e) => {
   });
 });
 
-// ---------- COINS DISPLAY ----------
 function updateCoinsDisplay() {
   document.getElementById('user-coins-display').textContent = (currentProfile?.coins ?? 0).toLocaleString();
   updateLikedBadge();
 }
 
-// ---------- TOAST ----------
 function showToast(message, type = 'info') {
   const container = document.getElementById('toast-container');
   const toast = document.createElement('div');

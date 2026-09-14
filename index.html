@@ -1733,8 +1733,17 @@ async function deleteCoinPackage(packageId) {
 }
 
 async function initSalesStats() {
-  const members = await supabase.from('profiles').select('id', { count: 'exact', head: true });
-  const visitors = await supabase.from('site_visits').select('id', { count: 'exact', head: true });
+  const presetFrom = document.getElementById('sales-date-from'); const presetTo = document.getElementById('sales-date-to');
+  if (presetFrom && !presetFrom.value) { const d = new Date(); d.setDate(d.getDate() - 6); presetFrom.value = d.toISOString().slice(0, 10); }
+  if (presetTo && !presetTo.value) presetTo.value = new Date().toISOString().slice(0, 10);
+  const fromDate = document.getElementById('sales-date-from')?.value;
+  const toDate = document.getElementById('sales-date-to')?.value;
+  let memberQuery = supabase.from('profiles').select('id', { count: 'exact', head: true });
+  let visitorQuery = supabase.from('site_visits').select('id', { count: 'exact', head: true });
+  if (fromDate) { memberQuery = memberQuery.gte('created_at', `${fromDate}T00:00:00`); visitorQuery = visitorQuery.gte('visited_at', `${fromDate}T00:00:00`); }
+  if (toDate) { memberQuery = memberQuery.lte('created_at', `${toDate}T23:59:59`); visitorQuery = visitorQuery.lte('visited_at', `${toDate}T23:59:59`); }
+  const members = await memberQuery;
+  const visitors = await visitorQuery;
   const memberEl = document.getElementById('stat-total-members'); if (memberEl) memberEl.textContent = members.count || 0;
   const visitorEl = document.getElementById('stat-total-visitors'); if (visitorEl) visitorEl.textContent = visitors.count || 0;
   const { data, error } = await supabase.from('orders').select('*').order('created_at', { ascending: false });

@@ -943,7 +943,11 @@ function navigateTo(pageId) {
 
 function toggleMobileMenu() { document.getElementById('mobile-menu').classList.toggle('hidden'); }
 
-function handleAdminNavClick() {
+async function handleAdminNavClick() {
+  // โหลด session ล่าสุดก่อนตรวจสิทธิ์ ป้องกันการกดเร็วระหว่างที่ Auth ยังเริ่มต้นไม่เสร็จ
+  const { data } = await supabase.auth.getSession();
+  currentUser = data?.session?.user || currentUser;
+  if (currentUser && !currentProfile) await loadProfile();
   if (currentUser && isAdmin) { navigateTo('admin'); return; }
   if (currentUser && !isAdmin) { showToast('บัญชีนี้ไม่มีสิทธิ์แอดมิน', 'warning'); return; }
   pendingAdminRedirect = true;

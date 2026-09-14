@@ -1835,11 +1835,12 @@ function exportSalesTableCSV() {
   const start = from ? new Date(`${from}T00:00:00`) : new Date('2000-01-01');
   const end = to ? new Date(`${to}T23:59:59`) : new Date();
   const selected = document.getElementById('sales-item-filter')?.value || '';
-  const source = type === 'coins' ? salesOrdersCache.filter(o => o.status === 'paid') : purchasedChaptersCache.filter(o => !selected || (type === 'author' ? o.novels?.author === selected : type === 'novel' ? o.novels?.title === selected : true));
-  const rows = source.filter(o => { const d = new Date(o.paid_at || o.created_at); return d >= start && d <= end; });
+  const source = type === 'coins' ? salesOrdersCache.filter(o => o.status === 'paid') : purchasedChaptersCache.filter(o => { const key = type === 'author' ? o.novels?.author : type === 'novel' ? o.novels?.title : null; return !selected || selected === 'ทั้งหมด' || key === selected; });
+  const rows = source.filter(o => { const d = new Date(type === 'coins' ? (o.paid_at || o.created_at) : (o.purchased_at || o.created_at)); return d >= start && d <= end; });
   let csv = 'รายการ,วันที่,ราคา,ประเภท\n';
   rows.forEach(o => {
-    const date = new Date(type === 'coins' ? (o.paid_at || o.created_at) : (o.purchased_at || o.created_at)).toLocaleString('th-TH');
+    const dateObj = new Date(type === 'coins' ? (o.paid_at || o.created_at) : (o.purchased_at || o.created_at));
+    const date = `${String(dateObj.getDate()).padStart(2, '0')}/${String(dateObj.getMonth() + 1).padStart(2, '0')}/${dateObj.getFullYear()} ${String(dateObj.getHours()).padStart(2, '0')}:${String(dateObj.getMinutes()).padStart(2, '0')}:${String(dateObj.getSeconds()).padStart(2, '0')}`;
     const label = type === 'coins' ? `เติม ${o.coins + (o.bonus || 0)} เหรียญ` : `ซื้อ ${o.novels?.title || 'นิยาย'}`;
     const price = type === 'coins' ? o.amount : o.price_paid;
     csv += `"${label}","${date}","${price}","${type === 'coins' ? 'เติมเหรียญ' : 'ขายนิยาย'}"\n`;

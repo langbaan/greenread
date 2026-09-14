@@ -254,6 +254,8 @@
         <div class="bg-gradient-to-br from-emerald-50 to-emerald-100 p-6 rounded-2xl border border-emerald-200"><p class="text-slate-600 text-sm font-medium">ยอดขายเหรียญวันนี้</p><p id="stat-today-revenue" class="text-3xl font-bold text-emerald-700 mt-2">฿0</p></div>
         <div class="bg-gradient-to-br from-blue-50 to-blue-100 p-6 rounded-2xl border border-blue-200"><p class="text-slate-600 text-sm font-medium">ยอดขายนิยายทั้งหมด</p><p id="stat-total-revenue" class="text-3xl font-bold text-blue-700 mt-2">฿0</p></div>
         <div class="bg-gradient-to-br from-purple-50 to-purple-100 p-6 rounded-2xl border border-purple-200"><p class="text-slate-600 text-sm font-medium">จำนวนรายการขาย</p><p id="stat-total-customers" class="text-3xl font-bold text-purple-700 mt-2">0</p></div>
+        <div class="bg-gradient-to-br from-amber-50 to-amber-100 p-6 rounded-2xl border border-amber-200"><p class="text-slate-600 text-sm font-medium">ยอดสมาชิก</p><p id="stat-total-members" class="text-3xl font-bold text-amber-700 mt-2">0</p></div>
+        <div class="bg-gradient-to-br from-cyan-50 to-cyan-100 p-6 rounded-2xl border border-cyan-200"><p class="text-slate-600 text-sm font-medium">คนเข้าชม</p><p id="stat-total-visitors" class="text-3xl font-bold text-cyan-700 mt-2">0</p></div>
       </div>
       <div class="bg-white p-6 rounded-2xl border border-slate-200"><h3 class="text-lg font-bold text-slate-800 mb-4">กราฟรายรับตามตัวกรอง</h3><canvas id="sales-chart" height="80"></canvas></div>
       <div class="bg-white p-6 rounded-2xl border border-slate-200">
@@ -928,6 +930,7 @@ function initAuthListener() {
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
+  supabase.from('site_visits').insert({}).then(() => {}).catch(() => {});
   replaceStaticIcons();
   initAuthListener();
   updateAuthUI();
@@ -1730,6 +1733,10 @@ async function deleteCoinPackage(packageId) {
 }
 
 async function initSalesStats() {
+  const members = await supabase.from('profiles').select('id', { count: 'exact', head: true });
+  const visitors = await supabase.from('site_visits').select('id', { count: 'exact', head: true });
+  const memberEl = document.getElementById('stat-total-members'); if (memberEl) memberEl.textContent = members.count || 0;
+  const visitorEl = document.getElementById('stat-total-visitors'); if (visitorEl) visitorEl.textContent = visitors.count || 0;
   const { data, error } = await supabase.from('orders').select('*').order('created_at', { ascending: false });
   if (error) { console.error('initSalesStats error:', error); showToast('โหลดข้อมูลยอดขายไม่สำเร็จ', 'error'); salesOrdersCache = []; }
   else salesOrdersCache = data || [];

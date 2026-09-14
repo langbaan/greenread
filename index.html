@@ -1310,7 +1310,7 @@ function paintPublicBanner() {
     const box = document.getElementById(`public-banners-${page}`); if (!box) return;
     const pageBanners = publicBanners.filter(item => item.target_page === page);
     const b = pageBanners.length ? pageBanners[publicBannerIndex % pageBanners.length] : null;
-    box.innerHTML = b ? `<div onclick="${b.click_type === 'link' ? `window.open('${String(b.click_value || '').replace(/'/g, '')}','_blank')` : `showToast('${String(b.click_value || '').replace(/'/g, '')}','info')`}" class="cursor-pointer rounded-2xl overflow-hidden shadow border border-emerald-100 bg-white">${b.media_type === 'video' ? `<video src="${b.media_url}" autoplay muted loop controls class="w-full max-h-80 object-cover"></video>` : `<img src="${b.media_url}" alt="${b.title}" class="w-full max-h-80 object-cover" />`}<div class="p-3 font-semibold text-emerald-800">${b.title}</div></div>` : '';
+    box.innerHTML = b ? `<div onclick="${b.click_type === 'link' ? `window.open('${String(b.click_value || '').replace(/'/g, '')}','_blank')` : `showToast('${String(b.click_value || '').replace(/'/g, '')}','info')`}" class="cursor-pointer rounded-2xl overflow-hidden shadow border border-emerald-100 bg-white">${b.media_type === 'video' ? `<video src="${b.media_url}" autoplay muted loop controls class="w-full max-h-80 object-cover"></video>` : `<img src="${b.media_url}" alt="${b.title}" class="w-full max-h-80 object-cover" />`}</div>` : '';
   });
 }
 async function renderPublicBanners() {

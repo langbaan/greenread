@@ -1784,6 +1784,15 @@ const ORDER_STATUS_CLASS = {
 
 function updateSalesTable() {
   const tbody = document.getElementById('sales-table-body');
+  const type = document.getElementById('sales-type-filter')?.value || 'coins';
+  if (type !== 'coins') {
+    const selected = document.getElementById('sales-item-filter')?.value || '';
+    const start = new Date(`${document.getElementById('sales-date-from')?.value || '2000-01-01'}T00:00:00`);
+    const end = new Date(`${document.getElementById('sales-date-to')?.value || '2999-12-31'}T23:59:59`);
+    const rows = purchasedChaptersCache.filter(o => { const d = new Date(o.purchased_at || o.created_at); return d >= start && d <= end && (!selected || (type === 'author' ? o.novels?.author === selected : o.novels?.title === selected)); });
+    tbody.innerHTML = rows.slice(0, 50).map(o => `<tr class="border-b"><td class="p-3 font-mono text-xs">${(o.id || '').slice(0, 8)}</td><td class="p-3 text-xs">${new Date(o.purchased_at || o.created_at).toLocaleString('th-TH')}</td><td class="p-3 text-xs">ปลดล็อก ${o.novels?.title || 'นิยาย'}${o.novels?.author ? ` · ${o.novels.author}` : ''}</td><td class="p-3 font-bold text-emerald-700">฿${Number(o.price_paid || 0).toLocaleString('th-TH', { minimumFractionDigits: 2 })}</td><td class="p-3"><span class="px-3 py-1 bg-emerald-100 text-emerald-800 text-[11px] font-bold rounded-full">สำเร็จ</span></td></tr>`).join('') || `<tr><td colspan="5" class="p-6 text-center text-slate-400">ยังไม่มีรายการปลดล็อกนิยาย</td></tr>`;
+    return;
+  }
   const sorted = [...salesOrdersCache].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
   tbody.innerHTML = sorted.slice(0, 15).map(o => `
     <tr class="hover:bg-slate-50 transition-colors border-b border-slate-100">

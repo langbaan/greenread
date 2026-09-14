@@ -122,21 +122,7 @@
   <!-- HOME -->
   <section id="page-home" class="page-view space-y-10">
     <div id="diagnostic-banner" class="hidden rounded-2xl border-2 border-rose-300 bg-rose-50 p-4 text-sm text-rose-800"></div>
-    <div id="public-banners" class="space-y-3"></div>
-
-    <div class="relative rounded-3xl bg-gradient-to-r from-emerald-800 via-emerald-700 to-teal-800 text-white p-8 md:p-12 overflow-hidden shadow-xl shadow-emerald-900/10">
-      <div class="absolute -right-10 -bottom-10 w-72 h-72 bg-emerald-500/20 rounded-full blur-3xl pointer-events-none"></div>
-      <div class="absolute right-20 top-0 w-48 h-48 bg-teal-400/20 rounded-full blur-2xl pointer-events-none"></div>
-      <div class="relative z-10 max-w-2xl space-y-4">
-        <span class="inline-block px-3.5 py-1 rounded-full text-xs font-semibold bg-emerald-400/20 text-emerald-200 border border-emerald-400/30">✨ แนะนำประจำสัปดาห์</span>
-        <h1 class="text-3xl md:text-5xl font-extrabold leading-tight tracking-wide">ท่องโลกจินตนาการ <br /><span class="text-emerald-300">ในบรรยากาศสุดผ่อนคลาย</span></h1>
-        <p class="text-emerald-100 text-sm md:text-base leading-relaxed">รวมนิยายหลากมิติ โรแมนติก แฟนตาซี และสืบสวน สอบสวน พร้อมระบบอ่านง่าย สบายตา ดีไซน์เขียวธรรมชาติ</p>
-        <div class="pt-2 flex flex-wrap gap-3">
-          <button onclick="navigateTo('catalog')" class="px-6 py-3 bg-emerald-400 hover:bg-emerald-300 text-emerald-950 font-bold rounded-2xl shadow-lg transition-all transform hover:-translate-y-0.5 flex items-center space-x-2"><i data-icon="compass"></i><span>สำรวจคลังนิยาย</span></button>
-          <button onclick="navigateTo('bookshelf')" class="px-6 py-3 bg-emerald-900/50 hover:bg-emerald-900/80 text-white border border-emerald-400/30 font-semibold rounded-2xl transition-all flex items-center space-x-2"><i data-icon="heart" data-filled="true" class="text-rose-400"></i><span>ดูรายการที่ถูกใจ</span></button>
-        </div>
-      </div>
-    </div>
+    <div id="public-banners-home" class="space-y-3"></div>
 
     <div>
       <div class="flex items-center justify-between mb-4">
@@ -157,6 +143,7 @@
 
   <!-- CATALOG -->
   <section id="page-catalog" class="page-view space-y-6 hidden">
+    <div id="public-banners-catalog" class="space-y-3"></div>
     <h1 class="text-3xl font-bold text-slate-800">คลังนิยาย</h1>
     <div class="flex flex-col md:flex-row gap-3">
       <select id="filter-genre" onchange="applyFilters()" class="px-4 py-2 border border-emerald-300 rounded-xl bg-white text-slate-800 font-medium hover:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-400"></select>
@@ -175,6 +162,7 @@
 
   <!-- BOOKSHELF -->
   <section id="page-bookshelf" class="page-view space-y-6 hidden">
+    <div id="public-banners-bookshelf" class="space-y-3"></div>
     <h1 class="text-3xl font-bold text-slate-800">ชั้นหนังสือของฉัน</h1>
     <div id="bookshelf-tabs" class="flex space-x-3 border-b border-slate-200">
       <button onclick="renderBookshelf('purchased')" id="tab-purchased" class="px-4 py-3 font-semibold border-b-2 transition-colors">ซื้อแล้ว (<span id="count-purchased">0</span>)</button>
@@ -1293,10 +1281,18 @@ async function loadBanners() {
   box.innerHTML = (data || []).map(b => `<div class="bg-white p-4 rounded-xl border flex justify-between gap-3"><div><b>${b.title}</b><p class="text-xs text-slate-500">${b.media_type} · ${b.active ? 'เปิดใช้งาน' : 'ปิดใช้งาน'}</p></div><button onclick="deleteBanner('${b.id}')" class="text-rose-600">ลบ</button></div>`).join('') || '<p class="text-slate-400">ยังไม่มี Banner</p>';
 }
 
+let publicBanners = [], publicBannerIndex = 0;
+function paintPublicBanner() {
+  ['home','catalog','bookshelf'].forEach(page => {
+    const box = document.getElementById(`public-banners-${page}`); if (!box) return;
+    const b = publicBanners[publicBannerIndex % Math.max(publicBanners.length, 1)];
+    box.innerHTML = b ? `<div onclick="${b.click_type === 'link' ? `window.open('${String(b.click_value || '').replace(/'/g, '')}','_blank')` : `showToast('${String(b.click_value || '').replace(/'/g, '')}','info')`}" class="cursor-pointer rounded-2xl overflow-hidden shadow border border-emerald-100 bg-white">${b.media_type === 'video' ? `<video src="${b.media_url}" autoplay muted loop controls class="w-full max-h-80 object-cover"></video>` : `<img src="${b.media_url}" alt="${b.title}" class="w-full max-h-80 object-cover" />`}<div class="p-3 font-semibold text-emerald-800">${b.title}</div></div>` : '';
+  });
+}
 async function renderPublicBanners() {
-  const box = document.getElementById('public-banners'); if (!box) return;
   const { data } = await supabase.from('banners').select('*').eq('active', true).order('sort_order');
-  box.innerHTML = (data || []).map(b => `<div onclick="${b.click_type === 'link' ? `window.open('${String(b.click_value || '').replace(/'/g, '')}','_blank')` : `showToast('${String(b.click_value || '').replace(/'/g, '')}','info')`}" class="cursor-pointer rounded-2xl overflow-hidden shadow border border-emerald-100 bg-white">${b.media_type === 'video' ? `<video src="${b.media_url}" controls class="w-full max-h-80 object-cover"></video>` : `<img src="${b.media_url}" alt="${b.title}" class="w-full max-h-80 object-cover" />`}<div class="p-3 font-semibold text-emerald-800">${b.title}</div></div>`).join('');
+  publicBanners = data || []; publicBannerIndex = 0; paintPublicBanner();
+  if (publicBanners.length > 1) setInterval(() => { publicBannerIndex++; paintPublicBanner(); }, 6000);
 }
 
 async function saveBanner() {

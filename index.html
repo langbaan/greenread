@@ -242,9 +242,9 @@
 
     <div id="admin-stats-content" class="space-y-6">
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div class="bg-gradient-to-br from-emerald-50 to-emerald-100 p-6 rounded-2xl border border-emerald-200"><p class="text-slate-600 text-sm font-medium">รายรับวันนี้</p><p id="stat-today-revenue" class="text-3xl font-bold text-emerald-700 mt-2">฿0</p></div>
-        <div class="bg-gradient-to-br from-blue-50 to-blue-100 p-6 rounded-2xl border border-blue-200"><p class="text-slate-600 text-sm font-medium">ยอดขายทั้งหมด</p><p id="stat-total-revenue" class="text-3xl font-bold text-blue-700 mt-2">฿0</p></div>
-        <div class="bg-gradient-to-br from-purple-50 to-purple-100 p-6 rounded-2xl border border-purple-200"><p class="text-slate-600 text-sm font-medium">จำนวนออเดอร์</p><p id="stat-total-customers" class="text-3xl font-bold text-purple-700 mt-2">0</p></div>
+        <div class="bg-gradient-to-br from-emerald-50 to-emerald-100 p-6 rounded-2xl border border-emerald-200"><p class="text-slate-600 text-sm font-medium">ยอดขายเหรียญวันนี้</p><p id="stat-today-revenue" class="text-3xl font-bold text-emerald-700 mt-2">฿0</p></div>
+        <div class="bg-gradient-to-br from-blue-50 to-blue-100 p-6 rounded-2xl border border-blue-200"><p class="text-slate-600 text-sm font-medium">ยอดขายนิยายทั้งหมด</p><p id="stat-total-revenue" class="text-3xl font-bold text-blue-700 mt-2">฿0</p></div>
+        <div class="bg-gradient-to-br from-purple-50 to-purple-100 p-6 rounded-2xl border border-purple-200"><p class="text-slate-600 text-sm font-medium">จำนวนรายการขาย</p><p id="stat-total-customers" class="text-3xl font-bold text-purple-700 mt-2">0</p></div>
       </div>
       <div class="bg-white p-6 rounded-2xl border border-slate-200"><div class="flex flex-wrap items-center gap-3 mb-4"><h3 class="text-lg font-bold text-slate-800">กราฟรายรับ</h3><select id="sales-type-filter" onchange="refreshSalesView()" class="px-3 py-2 border rounded-xl"><option value="coins">ยอดเติมเหรียญ</option><option value="books">ยอดซื้อหนังสือ</option></select><label class="text-sm">ตั้งแต่ <input id="sales-date-from" type="date" onchange="refreshSalesView()" class="px-2 py-2 border rounded-xl" /></label><label class="text-sm">ถึง <input id="sales-date-to" type="date" onchange="refreshSalesView()" class="px-2 py-2 border rounded-xl" /></label></div><canvas id="sales-chart" height="80"></canvas></div>
       <div class="bg-white p-6 rounded-2xl border border-slate-200">
@@ -275,7 +275,10 @@
       <div class="bg-white p-6 rounded-2xl border border-slate-200 space-y-3">
         <h3 class="text-lg font-bold">เพิ่ม Banner ประกาศ/โฆษณา</h3>
         <input id="banner-title" placeholder="หัวข้อ Banner" class="w-full px-4 py-2 border rounded-xl" />
-        <div class="grid md:grid-cols-2 gap-3"><select id="banner-media-type" class="px-4 py-2 border rounded-xl"><option value="image">รูปภาพ</option><option value="video">วิดีโอ</option></select><input id="banner-media-url" placeholder="URL รูปภาพหรือวิดีโอ" class="px-4 py-2 border rounded-xl" /></div>
+        <div class="grid md:grid-cols-2 gap-3"><select id="banner-media-type" onchange="resetBannerUploadMode()" class="px-4 py-2 border rounded-xl"><option value="image">รูปภาพ</option><option value="video">วิดีโอ</option></select><select id="banner-media-source" onchange="toggleBannerSource()" class="px-4 py-2 border rounded-xl"><option value="url">ใช้ลิงก์ URL</option><option value="file">อัปโหลดจากคอมพิวเตอร์</option></select></div>
+        <input id="banner-media-url" placeholder="URL รูปภาพหรือวิดีโอ" class="w-full px-4 py-2 border rounded-xl" />
+        <input id="banner-media-file" type="file" accept="image/*,video/*" onchange="handleBannerFileSelect(event)" class="hidden" />
+        <button type="button" id="banner-file-button" onclick="document.getElementById('banner-media-file').click()" class="hidden px-4 py-2 bg-emerald-50 border border-emerald-300 text-emerald-700 rounded-xl font-semibold">เลือกไฟล์จากคอมพิวเตอร์</button><span id="banner-file-name" class="text-xs text-slate-500"></span>
         <select id="banner-target-page" class="w-full px-4 py-2 border rounded-xl"><option value="home">แสดงที่หน้าแรก</option><option value="catalog">แสดงที่คลังนิยาย</option><option value="bookshelf">แสดงที่ชั้นหนังสือ</option></select>
         <div class="grid md:grid-cols-2 gap-3"><select id="banner-click-type" class="px-4 py-2 border rounded-xl"><option value="text">แสดงข้อความ</option><option value="link">เปิดลิงก์</option></select><input id="banner-click-value" placeholder="ข้อความ หรือ URL ปลายทาง" class="px-4 py-2 border rounded-xl" /></div>
         <button onclick="saveBanner()" class="px-5 py-2 bg-emerald-600 text-white rounded-xl font-semibold">บันทึก Banner</button>
@@ -1315,6 +1318,14 @@ async function saveBanner() {
   ['banner-title','banner-media-url','banner-click-value'].forEach(id => document.getElementById(id).value = '');
   showToast('บันทึก Banner สำเร็จ', 'success'); loadBanners();
 }
+
+function toggleBannerSource() {
+  const fileMode = document.getElementById('banner-media-source').value === 'file';
+  document.getElementById('banner-media-url').classList.toggle('hidden', fileMode);
+  document.getElementById('banner-file-button').classList.toggle('hidden', !fileMode);
+}
+function resetBannerUploadMode() { document.getElementById('banner-media-file').value = ''; document.getElementById('banner-file-name').textContent = ''; }
+function handleBannerFileSelect(e) { const file = e.target.files[0]; if (!file) return; document.getElementById('banner-file-name').textContent = file.name; const reader = new FileReader(); reader.onload = ev => { document.getElementById('banner-media-url').value = ev.target.result; }; reader.readAsDataURL(file); }
 
 async function deleteBanner(id) {
   if (!confirm('ลบ Banner นี้หรือไม่?')) return;

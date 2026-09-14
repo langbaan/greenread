@@ -1733,7 +1733,7 @@ async function initSalesStats() {
   const { data, error } = await supabase.from('orders').select('*').order('created_at', { ascending: false });
   if (error) { console.error('initSalesStats error:', error); showToast('โหลดข้อมูลยอดขายไม่สำเร็จ', 'error'); salesOrdersCache = []; }
   else salesOrdersCache = data || [];
-  const purchased = await supabase.from('purchased_chapters').select('id, price_paid, purchased_at, novel_id, novels(title, author)').order('purchased_at', { ascending: false });
+  const purchased = await supabase.from('purchased_chapters').select('chapter_id, price_paid, purchased_at, novel_id, novels(title, author)').order('purchased_at', { ascending: false });
   purchasedChaptersCache = purchased.data || [];
   const item = document.getElementById('sales-item-filter');
   if (item) { const type = document.getElementById('sales-type-filter')?.value; const vals = [...new Set(purchasedChaptersCache.map(o => type === 'author' ? o.novels?.author : o.novels?.title).filter(Boolean))]; item.innerHTML = '<option value="">ทั้งหมด</option>' + vals.map(v => `<option>${v}</option>`).join(''); }

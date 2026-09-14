@@ -118,10 +118,10 @@
   </div>
 
   <div id="mobile-menu" class="hidden md:hidden bg-white border-b border-emerald-100 px-4 pt-2 pb-4 space-y-2">
-    <button onclick="navigateTo('home'); toggleMobileMenu()" class="w-full text-left px-4 py-3 rounded-xl font-medium text-slate-700 hover:bg-emerald-50 flex items-center space-x-3"><i data-icon="home" class="text-emerald-500"></i><span>หน้าแรก</span></button>
-    <button onclick="navigateTo('catalog'); toggleMobileMenu()" class="w-full text-left px-4 py-3 rounded-xl font-medium text-slate-700 hover:bg-emerald-50 flex items-center space-x-3"><i data-icon="list" class="text-emerald-500"></i><span>คลังนิยาย & ตัวกรอง</span></button>
-    <button onclick="navigateTo('bookshelf'); toggleMobileMenu()" class="w-full text-left px-4 py-3 rounded-xl font-medium text-slate-700 hover:bg-emerald-50 flex items-center space-x-3"><i data-icon="bookmark" class="text-emerald-500"></i><span>ชั้นหนังสือของฉัน</span></button>
-    <button onclick="openTopUpModal(); toggleMobileMenu()" class="w-full text-left px-4 py-3 rounded-xl font-medium text-slate-700 hover:bg-emerald-50 flex items-center space-x-3"><i data-icon="coin" class="text-amber-500"></i><span>เติมเงิน</span><span class="ml-auto text-emerald-700 font-bold"><span id="mobile-coins-display">0</span> เหรียญคงเหลือ</span></button>
+    <button onclick="navigateTo('home')" class="w-full text-left px-4 py-3 rounded-xl font-medium text-slate-700 hover:bg-emerald-50 flex items-center space-x-3"><i data-icon="home" class="text-emerald-500"></i><span>หน้าแรก</span></button>
+    <button onclick="navigateTo('catalog')" class="w-full text-left px-4 py-3 rounded-xl font-medium text-slate-700 hover:bg-emerald-50 flex items-center space-x-3"><i data-icon="list" class="text-emerald-500"></i><span>คลังนิยาย & ตัวกรอง</span></button>
+    <button onclick="navigateTo('bookshelf')" class="w-full text-left px-4 py-3 rounded-xl font-medium text-slate-700 hover:bg-emerald-50 flex items-center space-x-3"><i data-icon="bookmark" class="text-emerald-500"></i><span>ชั้นหนังสือของฉัน</span></button>
+    <button onclick="openTopUpModal()" class="w-full text-left px-4 py-3 rounded-xl font-medium text-slate-700 hover:bg-emerald-50 flex items-center space-x-3"><i data-icon="coin" class="text-amber-500"></i><span>เติมเงิน</span><span class="ml-auto text-emerald-700 font-bold"><span id="mobile-coins-display">0</span> เหรียญคงเหลือ</span></button>
   </div>
 </header>
 
@@ -246,7 +246,7 @@
         <div class="bg-gradient-to-br from-blue-50 to-blue-100 p-6 rounded-2xl border border-blue-200"><p class="text-slate-600 text-sm font-medium">ยอดขายทั้งหมด</p><p id="stat-total-revenue" class="text-3xl font-bold text-blue-700 mt-2">฿0</p></div>
         <div class="bg-gradient-to-br from-purple-50 to-purple-100 p-6 rounded-2xl border border-purple-200"><p class="text-slate-600 text-sm font-medium">จำนวนออเดอร์</p><p id="stat-total-customers" class="text-3xl font-bold text-purple-700 mt-2">0</p></div>
       </div>
-      <div class="bg-white p-6 rounded-2xl border border-slate-200"><h3 class="text-lg font-bold text-slate-800 mb-4">กราฟรายรับรายวัน (7 วันล่าสุด)</h3><canvas id="sales-chart" height="80"></canvas></div>
+      <div class="bg-white p-6 rounded-2xl border border-slate-200"><div class="flex flex-wrap items-center gap-3 mb-4"><h3 class="text-lg font-bold text-slate-800">กราฟรายรับ</h3><select id="sales-type-filter" onchange="refreshSalesView()" class="px-3 py-2 border rounded-xl"><option value="coins">ยอดเติมเหรียญ</option><option value="books">ยอดซื้อหนังสือ</option></select><label class="text-sm">ตั้งแต่ <input id="sales-date-from" type="date" onchange="refreshSalesView()" class="px-2 py-2 border rounded-xl" /></label><label class="text-sm">ถึง <input id="sales-date-to" type="date" onchange="refreshSalesView()" class="px-2 py-2 border rounded-xl" /></label></div><canvas id="sales-chart" height="80"></canvas></div>
       <div class="bg-white p-6 rounded-2xl border border-slate-200">
         <div class="flex justify-between items-center mb-4 flex-wrap gap-2">
           <h3 class="text-lg font-bold text-slate-800">รายการขายล่าสุด</h3>
@@ -632,6 +632,7 @@ let isAdmin = false;
 let pendingAdminRedirect = false;
 
 let salesOrdersCache = [];
+let purchasedChaptersCache = [];
 let adminChaptersCache = [];
 
 let currentReaderNovelId = null;
@@ -1694,6 +1695,11 @@ async function initSalesStats() {
   const { data, error } = await supabase.from('orders').select('*').order('created_at', { ascending: false });
   if (error) { console.error('initSalesStats error:', error); showToast('โหลดข้อมูลยอดขายไม่สำเร็จ', 'error'); salesOrdersCache = []; }
   else salesOrdersCache = data || [];
+  const purchased = await supabase.from('purchased_chapters').select('id, price_paid, created_at').order('created_at', { ascending: false });
+  purchasedChaptersCache = purchased.data || [];
+  const from = document.getElementById('sales-date-from'); const to = document.getElementById('sales-date-to');
+  if (from && !from.value) { const d = new Date(); d.setDate(d.getDate() - 6); from.value = d.toISOString().slice(0, 10); }
+  if (to && !to.value) to.value = new Date().toISOString().slice(0, 10);
 
   try { updateSalesChart(); } catch (err) { console.error('Sales chart error:', err); }
   try { updateSalesTable(); } catch (err) { console.error('Sales table error:', err); }
@@ -1708,19 +1714,24 @@ function updateSalesChart() {
   const ctx = document.getElementById('sales-chart').getContext('2d');
   if (salesChartInstance) salesChartInstance.destroy();
 
-  const paidOrders = salesOrdersCache.filter(o => o.status === 'paid');
-  const days = Array.from({ length: 7 }, (_, i) => {
-    const d = new Date(); d.setDate(d.getDate() - (6 - i)); return d;
-  });
+  const type = document.getElementById('sales-type-filter')?.value || 'coins';
+  const fromValue = document.getElementById('sales-date-from')?.value;
+  const toValue = document.getElementById('sales-date-to')?.value;
+  const start = fromValue ? new Date(`${fromValue}T00:00:00`) : new Date(Date.now() - 6 * 86400000);
+  const end = toValue ? new Date(`${toValue}T23:59:59`) : new Date();
+  const days = []; for (let d = new Date(start); d <= end && days.length < 90; d.setDate(d.getDate() + 1)) days.push(new Date(d));
+  const entries = type === 'books' ? purchasedChaptersCache : salesOrdersCache.filter(o => o.status === 'paid');
   const labels = days.map(d => d.toLocaleDateString('th-TH', { month: 'short', day: 'numeric' }));
-  const data = days.map(d => paidOrders.filter(o => sameDay(new Date(o.paid_at || o.created_at), d)).reduce((sum, o) => sum + Number(o.amount), 0));
+  const data = days.map(d => entries.filter(o => sameDay(new Date(o.paid_at || o.created_at), d)).reduce((sum, o) => sum + Number(type === 'books' ? o.price_paid : o.amount), 0));
 
   salesChartInstance = new Chart(ctx, {
     type: 'line',
-    data: { labels, datasets: [{ label: 'รายรับ (บาท)', data, borderColor: '#10b981', backgroundColor: 'rgba(16,185,129,0.12)', tension: 0.4, fill: true }] },
+    data: { labels, datasets: [{ label: type === 'books' ? 'ยอดซื้อหนังสือ (บาท)' : 'ยอดเติมเหรียญ (บาท)', data, borderColor: '#10b981', backgroundColor: 'rgba(16,185,129,0.12)', tension: 0.4, fill: true }] },
     options: { responsive: true, plugins: { legend: { display: true } } }
   });
 }
+
+function refreshSalesView() { updateSalesChart(); updateSalesTable(); updateSalesMetrics(); }
 
 function sameDay(a, b) { return a.toDateString() === b.toDateString(); }
 
@@ -1756,14 +1767,24 @@ function updateSalesMetrics() {
 }
 
 function exportSalesTableCSV() {
-  let csv = 'ออเดอร์,วันที่,รายการ,ราคา,สถานะ\n';
-  salesOrdersCache.forEach(o => {
-    csv += `${o.id},"${new Date(o.created_at).toLocaleString('th-TH')}","เติม ${o.coins + (o.bonus || 0)} เหรียญ","${o.amount}",${ORDER_STATUS_LABEL[o.status] || o.status}\n`;
+  const type = document.getElementById('sales-type-filter')?.value || 'coins';
+  const from = document.getElementById('sales-date-from')?.value;
+  const to = document.getElementById('sales-date-to')?.value;
+  const start = from ? new Date(`${from}T00:00:00`) : new Date('2000-01-01');
+  const end = to ? new Date(`${to}T23:59:59`) : new Date();
+  const source = type === 'books' ? purchasedChaptersCache : salesOrdersCache.filter(o => o.status === 'paid');
+  const rows = source.filter(o => { const d = new Date(o.paid_at || o.created_at); return d >= start && d <= end; });
+  let csv = 'รายการ,วันที่,ราคา,ประเภท\n';
+  rows.forEach(o => {
+    const date = new Date(o.paid_at || o.created_at).toLocaleString('th-TH');
+    const label = type === 'books' ? 'ซื้อหนังสือ' : `เติม ${o.coins + (o.bonus || 0)} เหรียญ`;
+    const price = type === 'books' ? o.price_paid : o.amount;
+    csv += `"${label}","${date}","${price}","${type === 'books' ? 'ซื้อหนังสือ' : 'เติมเหรียญ'}"\n`;
   });
   const blob = new Blob(["\uFEFF" + csv], { type: 'text/csv;charset=utf-8;' });
   const link = document.createElement('a');
   link.href = URL.createObjectURL(blob);
-  link.download = `sales_${new Date().toISOString().split('T')[0]}.csv`;
+  link.download = `${type === 'books' ? 'book-sales' : 'coin-topups'}_${from || 'all'}_${to || 'all'}.csv`;
   link.click();
   showToast('ดาวน์โหลด CSV เรียบร้อยแล้ว', 'success');
 }

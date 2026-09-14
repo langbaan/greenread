@@ -54,17 +54,16 @@
 </head>
 <body class="min-h-screen flex flex-col font-mali antialiased selection:bg-emerald-200 selection:text-emerald-900">
 
-<header class="sticky top-0 z-50 glass-header border-b border-emerald-100 shadow-sm transition-all duration-300">
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-    <div class="flex items-center justify-between h-20">
+  <header class="sticky top-0 z-50 glass-header border-b border-emerald-100 shadow-sm transition-all duration-300">
+  <div class="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8">
+    <div class="flex items-center justify-between h-16 sm:h-20 gap-2">
 
-      <div class="flex items-center space-x-3 cursor-pointer" onclick="navigateTo('home')">
-        <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-emerald-600 to-emerald-400 flex items-center justify-center text-white shadow-lg shadow-emerald-200 transform hover:scale-105 transition-transform">
-          <i data-icon="book" class="text-2xl"></i>
+      <div class="flex items-center space-x-2 sm:space-x-3 cursor-pointer min-w-0" onclick="navigateTo('home')">
+        <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-gradient-to-tr from-emerald-600 to-emerald-400 flex items-center justify-center text-white shadow-lg shadow-emerald-200 transform hover:scale-105 transition-transform flex-shrink-0">
+          <i data-icon="book" class="text-xl sm:text-2xl"></i>
         </div>
-        <div>
-          <span class="text-2xl font-bold bg-gradient-to-r from-emerald-800 via-emerald-600 to-teal-600 bg-clip-text text-transparent">นิยายหลังบ้าน</span>
-          <span class="block text-xs text-emerald-600 font-medium">คลังนิยายสีเขียวเพื่อคุณ</span>
+        <div class="min-w-0">
+          <span class="text-lg sm:text-2xl whitespace-nowrap font-bold bg-gradient-to-r from-emerald-800 via-emerald-600 to-teal-600 bg-clip-text text-transparent">นิยายหลังบ้าน</span>
         </div>
       </div>
 
@@ -355,17 +354,18 @@
       <input type="hidden" id="form-novel-id" />
       <div class="grid grid-cols-2 gap-4">
         <input type="text" id="form-title" placeholder="ชื่อนิยาย" required class="px-4 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-400" />
-        <input type="text" id="form-author" placeholder="ผู้แต่ง" required class="px-4 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-400" />
+        <div class="space-y-2"><select id="form-author" required onchange="toggleCustomNovelField('author')" class="w-full px-4 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-400"><option value="">เลือกผู้แต่งเดิม</option></select><input type="text" id="form-author-custom" placeholder="พิมพ์ผู้แต่งใหม่" class="hidden w-full px-4 py-2 border border-emerald-300 rounded-xl" /></div>
       </div>
       <div class="grid grid-cols-2 gap-4">
-        <select id="form-genre" required class="px-4 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-400">
+        <select id="form-genre" required onchange="toggleCustomNovelField('genre')" class="px-4 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-400">
           <option value="">เลือกหมวด</option>
           <option value="โรแมนติก">โรแมนติก</option>
           <option value="แฟนตาซี">แฟนตาซี</option>
           <option value="กำลังภายใน">กำลังภายใน</option>
           <option value="สืบสวน">สืบสวน</option>
-          <option value="สยองขวัญ">สยองขวัญ</option>
+          <option value="สยองขวัญ">สยองขวัญ</option><option value="__new__">+ เพิ่มหมวดหมู่ใหม่</option>
         </select>
+        <input type="text" id="form-genre-custom" placeholder="พิมพ์หมวดหมู่ใหม่" class="hidden w-full px-4 py-2 border border-emerald-300 rounded-xl" />
         <input type="number" id="form-price-per-chapter" placeholder="ราคาต่อตอน (เหรียญ)" min="0" required class="px-4 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-400" />
       </div>
       <select id="form-status" class="w-full px-4 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-400">
@@ -1335,6 +1335,10 @@ function openNovelModal(novelId = null) {
   const modal = document.getElementById('novel-modal');
   const title = document.getElementById('modal-title');
   document.getElementById('novel-form').reset();
+  populateNovelAuthorOptions();
+  populateNovelGenreOptions();
+  document.getElementById('form-author-custom').classList.add('hidden');
+  document.getElementById('form-genre-custom').classList.add('hidden');
   pendingCoverDataUri = null;
   document.getElementById('form-cover-file').value = '';
   document.getElementById('clear-cover-upload-btn').classList.add('hidden');
@@ -1361,6 +1365,27 @@ function openNovelModal(novelId = null) {
     document.getElementById('cover-preview').classList.add('hidden');
   }
   modal.classList.remove('hidden');
+}
+
+function populateNovelAuthorOptions() {
+  const select = document.getElementById('form-author');
+  const authors = [...new Set(novels.map(n => String(n.author || '').trim()).filter(Boolean))].sort((a,b) => a.localeCompare(b, 'th'));
+  select.innerHTML = '<option value="">เลือกผู้แต่งเดิม</option>' + authors.map(a => `<option value="${a.replace(/"/g, '&quot;')}">${a}</option>`).join('') + '<option value="__new__">+ เพิ่มผู้แต่งใหม่</option>';
+}
+
+function populateNovelGenreOptions() {
+  const select = document.getElementById('form-genre');
+  const genres = [...new Set(novels.map(n => String(n.genre || '').trim()).filter(Boolean))];
+  select.innerHTML = '<option value="">เลือกหมวด</option>' + genres.map(g => `<option value="${g.replace(/"/g, '&quot;')}">${g}</option>`).join('') + '<option value="__new__">+ เพิ่มหมวดหมู่ใหม่</option>';
+}
+
+function toggleCustomNovelField(type) {
+  const select = document.getElementById(`form-${type}`);
+  const custom = document.getElementById(`form-${type}-custom`);
+  const isNew = select.value === '__new__';
+  custom.classList.toggle('hidden', !isNew);
+  custom.required = isNew;
+  if (!isNew) custom.value = '';
 }
 
 function editNovel(novelId) { openNovelModal(novelId); }
@@ -1407,8 +1432,10 @@ async function saveNovelForm(e) {
   e.preventDefault();
   const id = document.getElementById('form-novel-id').value;
   const title = document.getElementById('form-title').value.trim();
-  const author = document.getElementById('form-author').value.trim();
-  const genre = document.getElementById('form-genre').value;
+  const authorSelect = document.getElementById('form-author').value;
+  const genreSelect = document.getElementById('form-genre').value;
+  const author = (authorSelect === '__new__' ? document.getElementById('form-author-custom').value : authorSelect).trim();
+  const genre = (genreSelect === '__new__' ? document.getElementById('form-genre-custom').value : genreSelect).trim();
   const pricePerChapter = parseFloat(document.getElementById('form-price-per-chapter').value) || 0;
   const typedCoverUrl = document.getElementById('form-cover').value.trim();
   const status = document.getElementById('form-status').value;

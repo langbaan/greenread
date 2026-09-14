@@ -1772,7 +1772,7 @@ function updateSalesChart() {
   });
 }
 
-function refreshSalesView() { const type = document.getElementById('sales-type-filter')?.value || 'coins'; const item = document.getElementById('sales-item-filter'); if (item) { item.classList.toggle('hidden', !['author','novel'].includes(type)); const vals = [...new Set(purchasedChaptersCache.map(o => type === 'author' ? o.novels?.author : o.novels?.title).filter(Boolean))]; item.innerHTML = '<option value="">ทั้งหมด</option>' + vals.map(v => `<option>${v}</option>`).join(''); } updateSalesChart(); updateSalesTable(); updateSalesMetrics(); }
+function refreshSalesView() { const type = document.getElementById('sales-type-filter')?.value || 'coins'; const item = document.getElementById('sales-item-filter'); if (item) { const previous = item.value; item.classList.toggle('hidden', !['author','novel'].includes(type)); const vals = [...new Set(purchasedChaptersCache.map(o => type === 'author' ? o.novels?.author : o.novels?.title).filter(Boolean))]; item.innerHTML = '<option value="">ทั้งหมด</option>' + vals.map(v => `<option value="${v.replace(/"/g, '&quot;')}">${v}</option>`).join(''); if (vals.includes(previous)) item.value = previous; } updateSalesChart(); updateSalesTable(); updateSalesMetrics(); }
 
 function sameDay(a, b) { return a.toDateString() === b.toDateString(); }
 

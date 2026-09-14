@@ -1863,7 +1863,7 @@ async function startPromptPayQR() {
   document.getElementById('payment-qr-loading').classList.remove('hidden');
 
   try {
-    const { ok, result } = await callEdgeFunction('create-beam-charge', { package_id: selectedCoinPackage.id });
+    const { ok, result } = await callEdgeFunction('super-service', { package_id: selectedCoinPackage.id });
     document.getElementById('payment-qr-loading').classList.add('hidden');
 
     if (!ok || result.error) {

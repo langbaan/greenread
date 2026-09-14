@@ -1797,6 +1797,18 @@ function updateSalesTable() {
 }
 
 function updateSalesMetrics() {
+  const type = document.getElementById('sales-type-filter')?.value || 'coins';
+  if (type !== 'coins') {
+    const selected = document.getElementById('sales-item-filter')?.value || '';
+    const start = new Date(`${document.getElementById('sales-date-from')?.value || '2000-01-01'}T00:00:00`);
+    const end = new Date(`${document.getElementById('sales-date-to')?.value || '2999-12-31'}T23:59:59`);
+    const rows = purchasedChaptersCache.filter(o => { const d = new Date(o.purchased_at || o.created_at); return d >= start && d <= end && (!selected || (type === 'author' ? o.novels?.author === selected : o.novels?.title === selected)); });
+    const total = rows.reduce((s, o) => s + Number(o.price_paid || 0), 0);
+    document.getElementById('stat-today-revenue').textContent = `฿${total.toLocaleString('th-TH', { minimumFractionDigits: 2 })}`;
+    document.getElementById('stat-total-revenue').textContent = `฿${total.toLocaleString('th-TH', { minimumFractionDigits: 2 })}`;
+    document.getElementById('stat-total-customers').textContent = rows.length;
+    return;
+  }
   const today = new Date();
   const paidOrders = salesOrdersCache.filter(o => o.status === 'paid');
   const todayRevenue = paidOrders.filter(o => sameDay(new Date(o.paid_at || o.created_at), today)).reduce((s, o) => s + Number(o.amount), 0);

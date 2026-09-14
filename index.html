@@ -122,6 +122,7 @@
   <!-- HOME -->
   <section id="page-home" class="page-view space-y-10">
     <div id="diagnostic-banner" class="hidden rounded-2xl border-2 border-rose-300 bg-rose-50 p-4 text-sm text-rose-800"></div>
+    <div id="public-banners" class="space-y-3"></div>
 
     <div class="relative rounded-3xl bg-gradient-to-r from-emerald-800 via-emerald-700 to-teal-800 text-white p-8 md:p-12 overflow-hidden shadow-xl shadow-emerald-900/10">
       <div class="absolute -right-10 -bottom-10 w-72 h-72 bg-emerald-500/20 rounded-full blur-3xl pointer-events-none"></div>
@@ -229,8 +230,18 @@
     </div>
     <div class="flex space-x-3 border-b border-slate-200 overflow-x-auto">
       <button onclick="switchAdminTab('stats')" id="admin-tab-stats" class="px-4 py-3 font-semibold border-b-2 whitespace-nowrap"><i data-icon="chart" class="mr-2"></i>สถิติการขาย</button>
-      <button onclick="switchAdminTab('novels')" id="admin-tab-novels" class="px-4 py-3 font-semibold border-b-2 whitespace-nowrap"><i data-icon="book" class="mr-2"></i>จัดการนิยาย</button>
+      <button onclick="switchAdminTab('add-novel')" id="admin-tab-add-novel" class="px-4 py-3 font-semibold border-b-2 whitespace-nowrap"><i data-icon="plus" class="mr-2"></i>เพิ่มนิยายใหม่</button>
+      <button onclick="switchAdminTab('novels')" id="admin-tab-novels" class="px-4 py-3 font-semibold border-b-2 whitespace-nowrap"><i data-icon="book" class="mr-2"></i>คลังนิยาย</button>
+      <button onclick="switchAdminTab('web')" id="admin-tab-web" class="px-4 py-3 font-semibold border-b-2 whitespace-nowrap"><i data-icon="image" class="mr-2"></i>จัดการเว็บไซต์</button>
       <button onclick="switchAdminTab('packages')" id="admin-tab-packages" class="px-4 py-3 font-semibold border-b-2 whitespace-nowrap"><i data-icon="coin" class="mr-2"></i>ชุดเหรียญ</button>
+    </div>
+
+    <div id="admin-add-novel-content" class="hidden space-y-4">
+      <div class="bg-white p-6 rounded-2xl border border-slate-200">
+        <h3 class="text-lg font-bold text-slate-800 mb-2">เพิ่มนิยายใหม่</h3>
+        <p class="text-sm text-slate-500 mb-4">กรอกข้อมูลแล้วกดปุ่มด้านล่าง ระบบจะเปิดแบบฟอร์มเพิ่มนิยาย</p>
+        <button onclick="openNovelModal()" class="px-6 py-3 bg-emerald-600 text-white rounded-xl font-semibold hover:bg-emerald-700"><i data-icon="plus" class="mr-2"></i>เปิดแบบฟอร์มเพิ่มนิยาย</button>
+      </div>
     </div>
 
     <div id="admin-stats-content" class="space-y-6">
@@ -255,13 +266,23 @@
     </div>
 
     <div id="admin-novels-content" class="hidden space-y-4">
-      <button onclick="openNovelModal()" class="px-6 py-3 bg-emerald-600 text-white rounded-xl font-semibold hover:bg-emerald-700 flex items-center space-x-2"><i data-icon="plus"></i><span>เพิ่มนิยายเรื่องใหม่</span></button>
+      <div class="flex gap-3 flex-wrap"><button onclick="openNovelModal()" class="px-6 py-3 bg-emerald-600 text-white rounded-xl font-semibold hover:bg-emerald-700 flex items-center space-x-2"><i data-icon="plus"></i><span>เพิ่มนิยายเรื่องใหม่</span></button><input id="admin-novel-search" oninput="filterAdminNovels()" placeholder="ค้นหาชื่อเรื่อง / ผู้แต่ง / หมวดหมู่" class="flex-1 min-w-[240px] px-4 py-3 border border-emerald-200 rounded-xl" /></div>
       <div class="bg-white p-6 rounded-2xl border border-slate-200 overflow-x-auto">
         <table class="w-full text-sm">
           <thead class="bg-slate-50 border-b"><tr><th class="p-3 text-left font-semibold text-slate-700">ปก</th><th class="p-3 text-left font-semibold text-slate-700">ชื่อเรื่อง</th><th class="p-3 text-left font-semibold text-slate-700">หมวด</th><th class="p-3 text-left font-semibold text-slate-700">สถานะ</th><th class="p-3 text-left font-semibold text-slate-700">ราคา</th><th class="p-3 text-left font-semibold text-slate-700">ตอน</th><th class="p-3 text-left font-semibold text-slate-700">การดำเนินการ</th></tr></thead>
           <tbody id="admin-novels-table"></tbody>
         </table>
       </div>
+    </div>
+
+    <div id="admin-web-content" class="hidden space-y-4">
+      <div class="bg-white p-6 rounded-2xl border border-slate-200 space-y-3">
+        <h3 class="text-lg font-bold">เพิ่ม Banner ประกาศ/โฆษณา</h3>
+        <input id="banner-title" placeholder="หัวข้อ Banner" class="w-full px-4 py-2 border rounded-xl" />
+        <div class="grid md:grid-cols-2 gap-3"><select id="banner-media-type" class="px-4 py-2 border rounded-xl"><option value="image">รูปภาพ</option><option value="video">วิดีโอ</option></select><input id="banner-media-url" placeholder="URL รูปภาพหรือวิดีโอ" class="px-4 py-2 border rounded-xl" /></div>
+        <div class="grid md:grid-cols-2 gap-3"><select id="banner-click-type" class="px-4 py-2 border rounded-xl"><option value="text">แสดงข้อความ</option><option value="link">เปิดลิงก์</option></select><input id="banner-click-value" placeholder="ข้อความ หรือ URL ปลายทาง" class="px-4 py-2 border rounded-xl" /></div>
+        <button onclick="saveBanner()" class="px-5 py-2 bg-emerald-600 text-white rounded-xl font-semibold">บันทึก Banner</button>
+      </div><div id="admin-banners-list" class="space-y-3"></div>
     </div>
 
     <div id="admin-packages-content" class="hidden space-y-4">
@@ -553,7 +574,8 @@ const ICON_PATHS = {
   clock: '<circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>',
   upload: '<path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line>',
   image: '<rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline>',
-  logout: '<path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line>'
+   logout: '<path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line>',
+   share: '<circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.6" y1="13.5" x2="15.4" y2="17.5"></line><line x1="15.4" y1="6.5" x2="8.6" y2="10.5"></line>'
 };
 
 function icon(name, cls = '', filled = false) {
@@ -890,7 +912,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   initAuthListener();
   updateAuthUI();
   updateAdminUIState();
-  await Promise.all([loadNovels(), loadCoinPackages()]);
+    await Promise.all([loadNovels(), loadCoinPackages(), renderPublicBanners()]);
   updateCoinsDisplay();
   navigateTo('home');
   showToast('ยินดีต้อนรับสู่นิยายหลังบ้าน 🌿', 'success');
@@ -1037,9 +1059,9 @@ function createNovelCardHTML(novel) {
           <span class="px-2 py-1 bg-emerald-100 text-emerald-800 text-[10px] font-bold rounded-full">${priceLabel}</span>
         </div>
         <p class="text-xs text-slate-600 line-clamp-2 mb-4 flex-grow">${novel.synopsis}</p>
-        ${hasChapters
-          ? `<button onclick="openNovelReader('${novel.id}')" class="w-full px-3 py-2 bg-emerald-600 text-white text-sm font-semibold rounded-xl hover:bg-emerald-700 transition-all flex items-center justify-center gap-1">${icon('book', '')}เริ่มอ่าน</button>`
-          : `<button disabled class="w-full px-3 py-2 bg-slate-200 text-slate-400 text-sm font-semibold rounded-xl cursor-not-allowed">ยังไม่มีตอน</button>`}
+         ${hasChapters
+           ? `<div class="flex gap-2"><button onclick="openNovelReader('${novel.id}')" class="flex-1 px-3 py-2 bg-emerald-600 text-white text-sm font-semibold rounded-xl hover:bg-emerald-700 transition-all flex items-center justify-center gap-1">${icon('book', '')}เริ่มอ่าน</button><button onclick="shareNovel('${novel.id}')" class="px-3 py-2 bg-blue-50 text-blue-700 rounded-xl" title="แชร์นิยาย">${icon('share', '')}</button></div>`
+           : `<div class="flex gap-2"><button disabled class="flex-1 px-3 py-2 bg-slate-200 text-slate-400 text-sm font-semibold rounded-xl cursor-not-allowed">ยังไม่มีตอน</button><button onclick="shareNovel('${novel.id}')" class="px-3 py-2 bg-blue-50 text-blue-700 rounded-xl" title="แชร์นิยาย">${icon('share', '')}</button></div>`}
       </div>
     </div>
   `;
@@ -1236,13 +1258,57 @@ async function purchaseChapter() {
 }
 
 function switchAdminTab(tab) {
-  ['stats', 'novels', 'packages'].forEach(t => {
+  ['stats', 'add-novel', 'novels', 'web', 'packages'].forEach(t => {
     const btn = document.getElementById(`admin-tab-${t}`);
     const content = document.getElementById(`admin-${t}-content`);
     if (t === tab) { btn.classList.add('text-emerald-600', 'border-emerald-600'); btn.classList.remove('text-slate-600', 'border-transparent'); content.classList.remove('hidden'); }
     else { btn.classList.remove('text-emerald-600', 'border-emerald-600'); btn.classList.add('text-slate-600', 'border-transparent'); content.classList.add('hidden'); }
   });
   if (tab === 'stats') initSalesStats();
+  if (tab === 'web') loadBanners();
+}
+
+function filterAdminNovels() {
+  const q = (document.getElementById('admin-novel-search')?.value || '').toLowerCase().trim();
+  const original = novels;
+  novels = original.filter(n => [n.title, n.author, n.genre].some(v => String(v || '').toLowerCase().includes(q)));
+  renderAdminNovelsTable();
+  novels = original;
+}
+
+async function shareNovel(novelId) {
+  const url = `${location.origin}${location.pathname}?novel=${encodeURIComponent(novelId)}`;
+  try { await navigator.clipboard.writeText(url); showToast('คัดลอกลิงก์นิยายแล้ว', 'success'); }
+  catch { prompt('คัดลอกลิงก์นี้เพื่อแชร์', url); }
+}
+
+async function loadBanners() {
+  const box = document.getElementById('admin-banners-list'); if (!box) return;
+  const { data, error } = await supabase.from('banners').select('*').order('sort_order');
+  if (error) { box.innerHTML = `<p class="text-rose-600">โหลด Banner ไม่สำเร็จ: ${error.message}</p>`; return; }
+  box.innerHTML = (data || []).map(b => `<div class="bg-white p-4 rounded-xl border flex justify-between gap-3"><div><b>${b.title}</b><p class="text-xs text-slate-500">${b.media_type} · ${b.active ? 'เปิดใช้งาน' : 'ปิดใช้งาน'}</p></div><button onclick="deleteBanner('${b.id}')" class="text-rose-600">ลบ</button></div>`).join('') || '<p class="text-slate-400">ยังไม่มี Banner</p>';
+}
+
+async function renderPublicBanners() {
+  const box = document.getElementById('public-banners'); if (!box) return;
+  const { data } = await supabase.from('banners').select('*').eq('active', true).order('sort_order');
+  box.innerHTML = (data || []).map(b => `<div onclick="${b.click_type === 'link' ? `window.open('${String(b.click_value || '').replace(/'/g, '')}','_blank')` : `showToast('${String(b.click_value || '').replace(/'/g, '')}','info')`}" class="cursor-pointer rounded-2xl overflow-hidden shadow border border-emerald-100 bg-white">${b.media_type === 'video' ? `<video src="${b.media_url}" controls class="w-full max-h-80 object-cover"></video>` : `<img src="${b.media_url}" alt="${b.title}" class="w-full max-h-80 object-cover" />`}<div class="p-3 font-semibold text-emerald-800">${b.title}</div></div>`).join('');
+}
+
+async function saveBanner() {
+  const payload = { title: document.getElementById('banner-title').value.trim(), media_type: document.getElementById('banner-media-type').value, media_url: document.getElementById('banner-media-url').value.trim(), click_type: document.getElementById('banner-click-type').value, click_value: document.getElementById('banner-click-value').value.trim(), sort_order: 0 };
+  if (!payload.title || !payload.media_url) { showToast('กรุณากรอกหัวข้อและ URL Banner', 'warning'); return; }
+  const { error } = await supabase.from('banners').insert(payload);
+  if (error) { showToast('บันทึก Banner ไม่สำเร็จ: ' + error.message, 'error'); return; }
+  ['banner-title','banner-media-url','banner-click-value'].forEach(id => document.getElementById(id).value = '');
+  showToast('บันทึก Banner สำเร็จ', 'success'); loadBanners();
+}
+
+async function deleteBanner(id) {
+  if (!confirm('ลบ Banner นี้หรือไม่?')) return;
+  const { error } = await supabase.from('banners').delete().eq('id', id);
+  if (error) { showToast('ลบไม่สำเร็จ: ' + error.message, 'error'); return; }
+  loadBanners();
 }
 
 function renderAdminNovelsTable() {

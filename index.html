@@ -95,6 +95,10 @@
         </button>
       </nav>
 
+      <div onclick="openTopUpModal()" class="hidden sm:flex items-center gap-2 bg-emerald-50 border border-emerald-300 hover:bg-emerald-100 cursor-pointer text-emerald-800 px-3 py-2 rounded-full text-sm font-semibold whitespace-nowrap" title="คลิกเพื่อเติมเหรียญ">
+        <i data-icon="coin" class="text-amber-500"></i><span id="user-coins-display">0</span><span class="font-normal">เหรียญคงเหลือ</span><span class="bg-emerald-600 text-white text-xs px-2 py-1 rounded-full">เติมเงิน</span>
+      </div>
+
       <div class="flex items-center space-x-3">
         <div id="user-account-loggedout" class="flex items-center pl-2 border-l border-slate-200">
           <button onclick="openAuthModal('login')" class="px-4 py-2 bg-emerald-600 text-white rounded-xl text-sm font-semibold hover:bg-emerald-700 transition-all whitespace-nowrap">เข้าสู่ระบบ</button>

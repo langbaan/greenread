@@ -144,7 +144,7 @@
       <div class="flex items-center justify-between mb-4">
         <h2 class="text-xl font-bold text-slate-800 flex items-center space-x-2"><i data-icon="trending" class="text-emerald-600"></i><span>นิยายแนะนำ</span></h2>
       </div>
-      <div id="featured-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"></div>
+      <div id="homepage-free-section" class="hidden mb-8"><h3 class="text-lg font-bold mb-3">อ่านฟรี</h3><div id="free-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6"></div></div><div id="homepage-best-section" class="hidden mb-8"><h3 class="text-lg font-bold mb-3">ขายดี</h3><div id="best-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6"></div></div><div id="homepage-recommended-section"><h3 class="text-lg font-bold mb-3">แนะนำ</h3><div id="featured-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6"></div></div>
       <p id="home-empty" class="hidden text-center text-slate-400 py-12"><i data-icon="inbox" class="text-3xl mb-2 block"></i>ยังไม่มีนิยายในระบบตอนนี้</p>
     </div>
   </section>
@@ -228,6 +228,7 @@
       <button onclick="switchAdminTab('stats')" id="admin-tab-stats" class="px-4 py-3 font-semibold border-b-2 whitespace-nowrap"><i data-icon="chart" class="mr-2"></i>สถิติการขาย</button>
       <button onclick="switchAdminTab('add-novel')" id="admin-tab-add-novel" class="px-4 py-3 font-semibold border-b-2 whitespace-nowrap"><i data-icon="plus" class="mr-2"></i>เพิ่มนิยายใหม่</button>
       <button onclick="switchAdminTab('novels')" id="admin-tab-novels" class="px-4 py-3 font-semibold border-b-2 whitespace-nowrap"><i data-icon="book" class="mr-2"></i>คลังนิยาย</button>
+      <button onclick="switchAdminTab('ranking')" id="admin-tab-ranking" class="px-4 py-3 font-semibold border-b-2 whitespace-nowrap">จัดอันดับนิยาย</button>
       <button onclick="switchAdminTab('web')" id="admin-tab-web" class="px-4 py-3 font-semibold border-b-2 whitespace-nowrap"><i data-icon="image" class="mr-2"></i>จัดการเว็บไซต์</button>
       <button onclick="switchAdminTab('packages')" id="admin-tab-packages" class="px-4 py-3 font-semibold border-b-2 whitespace-nowrap"><i data-icon="coin" class="mr-2"></i>ชุดเหรียญ</button>
     </div>
@@ -241,12 +242,13 @@
     </div>
 
     <div id="admin-stats-content" class="space-y-6">
+      <div class="bg-white p-4 rounded-2xl border border-slate-200 flex flex-wrap items-center gap-3"><b>ตัวกรองรายงาน</b><select id="sales-type-filter" onchange="refreshSalesView()" class="px-3 py-2 border rounded-xl"><option value="coins">ยอดขายเติมเหรียญ</option><option value="books">ยอดขายนิยาย</option><option value="author">ยอดของผู้แต่งแต่ละคน</option><option value="novel">ยอดแต่ละเรื่อง</option></select><label>ตั้งแต่ <input id="sales-date-from" type="date" onchange="refreshSalesView()" class="px-2 py-2 border rounded-xl" /></label><label>ถึง <input id="sales-date-to" type="date" onchange="refreshSalesView()" class="px-2 py-2 border rounded-xl" /></label><select id="sales-item-filter" onchange="refreshSalesView()" class="hidden px-3 py-2 border rounded-xl"></select></div>
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div class="bg-gradient-to-br from-emerald-50 to-emerald-100 p-6 rounded-2xl border border-emerald-200"><p class="text-slate-600 text-sm font-medium">ยอดขายเหรียญวันนี้</p><p id="stat-today-revenue" class="text-3xl font-bold text-emerald-700 mt-2">฿0</p></div>
         <div class="bg-gradient-to-br from-blue-50 to-blue-100 p-6 rounded-2xl border border-blue-200"><p class="text-slate-600 text-sm font-medium">ยอดขายนิยายทั้งหมด</p><p id="stat-total-revenue" class="text-3xl font-bold text-blue-700 mt-2">฿0</p></div>
         <div class="bg-gradient-to-br from-purple-50 to-purple-100 p-6 rounded-2xl border border-purple-200"><p class="text-slate-600 text-sm font-medium">จำนวนรายการขาย</p><p id="stat-total-customers" class="text-3xl font-bold text-purple-700 mt-2">0</p></div>
       </div>
-      <div class="bg-white p-6 rounded-2xl border border-slate-200"><div class="flex flex-wrap items-center gap-3 mb-4"><h3 class="text-lg font-bold text-slate-800">กราฟรายรับ</h3><select id="sales-type-filter" onchange="refreshSalesView()" class="px-3 py-2 border rounded-xl"><option value="coins">ยอดเติมเหรียญ</option><option value="books">ยอดซื้อหนังสือ</option></select><label class="text-sm">ตั้งแต่ <input id="sales-date-from" type="date" onchange="refreshSalesView()" class="px-2 py-2 border rounded-xl" /></label><label class="text-sm">ถึง <input id="sales-date-to" type="date" onchange="refreshSalesView()" class="px-2 py-2 border rounded-xl" /></label></div><canvas id="sales-chart" height="80"></canvas></div>
+      <div class="bg-white p-6 rounded-2xl border border-slate-200"><h3 class="text-lg font-bold text-slate-800 mb-4">กราฟรายรับตามตัวกรอง</h3><canvas id="sales-chart" height="80"></canvas></div>
       <div class="bg-white p-6 rounded-2xl border border-slate-200">
         <div class="flex justify-between items-center mb-4 flex-wrap gap-2">
           <h3 class="text-lg font-bold text-slate-800">รายการขายล่าสุด</h3>
@@ -270,6 +272,7 @@
         </table>
       </div>
     </div>
+    <div id="admin-ranking-content" class="hidden space-y-4"><div class="bg-white p-6 rounded-2xl border border-slate-200"><h3 class="text-lg font-bold mb-3">เลือกนิยายแสดงบนหน้าแรก</h3><p class="text-sm text-slate-500 mb-4">เลือกได้หลายหัวข้อ แล้วกดบันทึก</p><div id="admin-ranking-list" class="space-y-2"></div><button onclick="saveHomepageRanking()" class="mt-4 px-5 py-2 bg-emerald-600 text-white rounded-xl font-semibold">บันทึกการจัดอันดับ</button></div></div>
 
     <div id="admin-web-content" class="hidden space-y-4">
       <div class="bg-white p-6 rounded-2xl border border-slate-200 space-y-3">
@@ -682,7 +685,7 @@ async function loadNovels() {
     pricePerChapter: Number(n.price_per_chapter) || 0,
     rating: Number(n.rating) || 0, viewCount: n.view_count || 0,
     status: n.status, cover: n.cover_url || createPlaceholderCoverDataUri(n.genre),
-    synopsis: n.synopsis || '', chapters: []
+     synopsis: n.synopsis || '', homepageTags: n.homepage_tags || [], chapters: []
   }));
   if (novels.length === 0) {
     showDiagnostic(
@@ -992,8 +995,10 @@ function renderHome() {
     <button onclick="goToGenre('${g}')" class="px-4 py-2 bg-white border border-emerald-200 rounded-full text-sm font-semibold text-emerald-700 hover:bg-emerald-50 hover:border-emerald-400 transition-all shadow-sm">${g}</button>
   `).join('');
 
-  const featured = [...novels].sort((a, b) => b.rating - a.rating).slice(0, 4);
-  document.getElementById('featured-grid').innerHTML = featured.map(createNovelCardHTML).join('');
+  const tagged = tag => novels.filter(n => (n.homepageTags || []).includes(tag));
+  const free = tagged('free'), best = tagged('best'), featured = tagged('recommended').length ? tagged('recommended') : [...novels].sort((a,b) => b.rating-a.rating).slice(0,4);
+  [['free',free],['best',best],['featured',featured]].forEach(([id,items]) => { const grid=document.getElementById(`${id}-grid`); if(grid) grid.innerHTML=items.map(createNovelCardHTML).join(''); });
+  document.getElementById('homepage-free-section').classList.toggle('hidden', !free.length); document.getElementById('homepage-best-section').classList.toggle('hidden', !best.length);
   document.getElementById('home-empty').classList.toggle('hidden', novels.length > 0);
 }
 
@@ -1264,7 +1269,7 @@ async function purchaseChapter() {
 }
 
 function switchAdminTab(tab) {
-  ['stats', 'add-novel', 'novels', 'web', 'packages'].forEach(t => {
+  ['stats', 'add-novel', 'novels', 'ranking', 'web', 'packages'].forEach(t => {
     const btn = document.getElementById(`admin-tab-${t}`);
     const content = document.getElementById(`admin-${t}-content`);
     if (t === tab) { btn.classList.add('text-emerald-600', 'border-emerald-600'); btn.classList.remove('text-slate-600', 'border-transparent'); content.classList.remove('hidden'); }
@@ -1272,7 +1277,11 @@ function switchAdminTab(tab) {
   });
   if (tab === 'stats') initSalesStats();
   if (tab === 'web') loadBanners();
+  if (tab === 'ranking') renderHomepageRanking();
 }
+
+function renderHomepageRanking() { const box=document.getElementById('admin-ranking-list'); if(!box) return; box.innerHTML=novels.map(n=>`<div class="flex flex-wrap items-center gap-3 border-b py-2"><b class="flex-1">${n.title}</b><label><input type="checkbox" data-rank="free" data-id="${n.id}" ${(n.homepageTags||[]).includes('free')?'checked':''}> อ่านฟรี</label><label><input type="checkbox" data-rank="best" data-id="${n.id}" ${(n.homepageTags||[]).includes('best')?'checked':''}> ขายดี</label><label><input type="checkbox" data-rank="recommended" data-id="${n.id}" ${(n.homepageTags||[]).includes('recommended')?'checked':''}> แนะนำ</label></div>`).join(''); }
+async function saveHomepageRanking() { for (const n of novels) { const tags=['free','best','recommended'].filter(t=>document.querySelector(`[data-rank="${t}"][data-id="${n.id}"]`)?.checked); const {error}=await supabase.from('novels').update({homepage_tags:tags}).eq('id',n.id); if(error){showToast('บันทึกอันดับไม่สำเร็จ: '+error.message,'error');return;} n.homepageTags=tags; } renderHome(); showToast('บันทึกการจัดอันดับสำเร็จ','success'); }
 
 function filterAdminNovels() {
   const q = (document.getElementById('admin-novel-search')?.value || '').toLowerCase().trim();
@@ -1706,8 +1715,10 @@ async function initSalesStats() {
   const { data, error } = await supabase.from('orders').select('*').order('created_at', { ascending: false });
   if (error) { console.error('initSalesStats error:', error); showToast('โหลดข้อมูลยอดขายไม่สำเร็จ', 'error'); salesOrdersCache = []; }
   else salesOrdersCache = data || [];
-  const purchased = await supabase.from('purchased_chapters').select('id, price_paid, created_at').order('created_at', { ascending: false });
+  const purchased = await supabase.from('purchased_chapters').select('id, price_paid, created_at, novel_id, novels(title, author)').order('created_at', { ascending: false });
   purchasedChaptersCache = purchased.data || [];
+  const item = document.getElementById('sales-item-filter');
+  if (item) { const type = document.getElementById('sales-type-filter')?.value; const vals = [...new Set(purchasedChaptersCache.map(o => type === 'author' ? o.novels?.author : o.novels?.title).filter(Boolean))]; item.innerHTML = '<option value="">ทั้งหมด</option>' + vals.map(v => `<option>${v}</option>`).join(''); }
   const from = document.getElementById('sales-date-from'); const to = document.getElementById('sales-date-to');
   if (from && !from.value) { const d = new Date(); d.setDate(d.getDate() - 6); from.value = d.toISOString().slice(0, 10); }
   if (to && !to.value) to.value = new Date().toISOString().slice(0, 10);
@@ -1731,18 +1742,19 @@ function updateSalesChart() {
   const start = fromValue ? new Date(`${fromValue}T00:00:00`) : new Date(Date.now() - 6 * 86400000);
   const end = toValue ? new Date(`${toValue}T23:59:59`) : new Date();
   const days = []; for (let d = new Date(start); d <= end && days.length < 90; d.setDate(d.getDate() + 1)) days.push(new Date(d));
-  const entries = type === 'books' ? purchasedChaptersCache : salesOrdersCache.filter(o => o.status === 'paid');
+  const selected = document.getElementById('sales-item-filter')?.value || '';
+  const entries = type === 'coins' ? salesOrdersCache.filter(o => o.status === 'paid') : purchasedChaptersCache.filter(o => !selected || (type === 'author' ? o.novels?.author === selected : type === 'novel' ? o.novels?.title === selected : true));
   const labels = days.map(d => d.toLocaleDateString('th-TH', { month: 'short', day: 'numeric' }));
   const data = days.map(d => entries.filter(o => sameDay(new Date(o.paid_at || o.created_at), d)).reduce((sum, o) => sum + Number(type === 'books' ? o.price_paid : o.amount), 0));
 
   salesChartInstance = new Chart(ctx, {
     type: 'line',
-    data: { labels, datasets: [{ label: type === 'books' ? 'ยอดซื้อหนังสือ (บาท)' : 'ยอดเติมเหรียญ (บาท)', data, borderColor: '#10b981', backgroundColor: 'rgba(16,185,129,0.12)', tension: 0.4, fill: true }] },
+    data: { labels, datasets: [{ label: type === 'coins' ? 'ยอดขายเติมเหรียญ (บาท)' : type === 'author' ? 'ยอดของผู้แต่ง (บาท)' : type === 'novel' ? 'ยอดขายรายเรื่อง (บาท)' : 'ยอดขายนิยาย (บาท)', data, borderColor: '#10b981', backgroundColor: 'rgba(16,185,129,0.12)', tension: 0.4, fill: true }] },
     options: { responsive: true, plugins: { legend: { display: true } } }
   });
 }
 
-function refreshSalesView() { updateSalesChart(); updateSalesTable(); updateSalesMetrics(); }
+function refreshSalesView() { const type = document.getElementById('sales-type-filter')?.value || 'coins'; const item = document.getElementById('sales-item-filter'); if (item) { item.classList.toggle('hidden', !['author','novel'].includes(type)); const vals = [...new Set(purchasedChaptersCache.map(o => type === 'author' ? o.novels?.author : o.novels?.title).filter(Boolean))]; item.innerHTML = '<option value="">ทั้งหมด</option>' + vals.map(v => `<option>${v}</option>`).join(''); } updateSalesChart(); updateSalesTable(); updateSalesMetrics(); }
 
 function sameDay(a, b) { return a.toDateString() === b.toDateString(); }
 
@@ -1783,19 +1795,20 @@ function exportSalesTableCSV() {
   const to = document.getElementById('sales-date-to')?.value;
   const start = from ? new Date(`${from}T00:00:00`) : new Date('2000-01-01');
   const end = to ? new Date(`${to}T23:59:59`) : new Date();
-  const source = type === 'books' ? purchasedChaptersCache : salesOrdersCache.filter(o => o.status === 'paid');
+  const selected = document.getElementById('sales-item-filter')?.value || '';
+  const source = type === 'coins' ? salesOrdersCache.filter(o => o.status === 'paid') : purchasedChaptersCache.filter(o => !selected || (type === 'author' ? o.novels?.author === selected : type === 'novel' ? o.novels?.title === selected : true));
   const rows = source.filter(o => { const d = new Date(o.paid_at || o.created_at); return d >= start && d <= end; });
   let csv = 'รายการ,วันที่,ราคา,ประเภท\n';
   rows.forEach(o => {
     const date = new Date(o.paid_at || o.created_at).toLocaleString('th-TH');
-    const label = type === 'books' ? 'ซื้อหนังสือ' : `เติม ${o.coins + (o.bonus || 0)} เหรียญ`;
-    const price = type === 'books' ? o.price_paid : o.amount;
-    csv += `"${label}","${date}","${price}","${type === 'books' ? 'ซื้อหนังสือ' : 'เติมเหรียญ'}"\n`;
+    const label = type === 'coins' ? `เติม ${o.coins + (o.bonus || 0)} เหรียญ` : `ซื้อ ${o.novels?.title || 'นิยาย'}`;
+    const price = type === 'coins' ? o.amount : o.price_paid;
+    csv += `"${label}","${date}","${price}","${type === 'coins' ? 'เติมเหรียญ' : 'ขายนิยาย'}"\n`;
   });
   const blob = new Blob(["\uFEFF" + csv], { type: 'text/csv;charset=utf-8;' });
   const link = document.createElement('a');
   link.href = URL.createObjectURL(blob);
-  link.download = `${type === 'books' ? 'book-sales' : 'coin-topups'}_${from || 'all'}_${to || 'all'}.csv`;
+  link.download = `${type === 'coins' ? 'coin-sales' : type === 'author' ? 'author-sales' : type === 'novel' ? 'novel-sales' : 'book-sales'}_${from || 'all'}_${to || 'all'}.csv`;
   link.click();
   showToast('ดาวน์โหลด CSV เรียบร้อยแล้ว', 'success');
 }

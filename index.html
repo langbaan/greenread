@@ -50,6 +50,19 @@
   .spinner { border: 3px solid #d1fae5; border-top-color: #10b981; border-radius: 50%; width: 24px; height: 24px; animation: spin 0.8s linear infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }
   .icon-svg { width: 1em; height: 1em; vertical-align: -0.125em; flex-shrink: 0; }
+  .nav-btn { white-space: nowrap; }
+  @media (max-width: 900px) {
+    header .nav-btn { padding-left: .5rem; padding-right: .5rem; }
+    header nav { gap: 0 !important; }
+    header nav .nav-btn span { white-space: nowrap; }
+    header .space-x-3 { column-gap: .4rem; }
+  }
+  @media (max-width: 700px) {
+    header .nav-btn { font-size: .78rem; }
+    header .nav-btn i { display: none; }
+    header #user-coins-display + span { display: none; }
+    header [title="คลิกเพื่อเติมเหรียญ"] { padding-left: .5rem; padding-right: .5rem; }
+  }
 </style>
 </head>
 <body class="min-h-screen flex flex-col font-mali antialiased selection:bg-emerald-200 selection:text-emerald-900">
@@ -267,6 +280,7 @@
         <h3 class="text-lg font-bold">เพิ่ม Banner ประกาศ/โฆษณา</h3>
         <input id="banner-title" placeholder="หัวข้อ Banner" class="w-full px-4 py-2 border rounded-xl" />
         <div class="grid md:grid-cols-2 gap-3"><select id="banner-media-type" class="px-4 py-2 border rounded-xl"><option value="image">รูปภาพ</option><option value="video">วิดีโอ</option></select><input id="banner-media-url" placeholder="URL รูปภาพหรือวิดีโอ" class="px-4 py-2 border rounded-xl" /></div>
+        <select id="banner-target-page" class="w-full px-4 py-2 border rounded-xl"><option value="home">แสดงที่หน้าแรก</option><option value="catalog">แสดงที่คลังนิยาย</option><option value="bookshelf">แสดงที่ชั้นหนังสือ</option></select>
         <div class="grid md:grid-cols-2 gap-3"><select id="banner-click-type" class="px-4 py-2 border rounded-xl"><option value="text">แสดงข้อความ</option><option value="link">เปิดลิงก์</option></select><input id="banner-click-value" placeholder="ข้อความ หรือ URL ปลายทาง" class="px-4 py-2 border rounded-xl" /></div>
         <button onclick="saveBanner()" class="px-5 py-2 bg-emerald-600 text-white rounded-xl font-semibold">บันทึก Banner</button>
       </div><div id="admin-banners-list" class="space-y-3"></div>
@@ -1279,14 +1293,15 @@ async function loadBanners() {
   const box = document.getElementById('admin-banners-list'); if (!box) return;
   const { data, error } = await supabase.from('banners').select('*').order('sort_order');
   if (error) { box.innerHTML = `<p class="text-rose-600">โหลด Banner ไม่สำเร็จ: ${error.message}</p>`; return; }
-  box.innerHTML = (data || []).map(b => `<div class="bg-white p-4 rounded-xl border flex justify-between gap-3"><div><b>${b.title}</b><p class="text-xs text-slate-500">${b.media_type} · ${b.active ? 'เปิดใช้งาน' : 'ปิดใช้งาน'}</p></div><button onclick="deleteBanner('${b.id}')" class="text-rose-600">ลบ</button></div>`).join('') || '<p class="text-slate-400">ยังไม่มี Banner</p>';
+  box.innerHTML = (data || []).map(b => `<div class="bg-white p-4 rounded-xl border flex justify-between gap-3"><div><b>${b.title}</b><p class="text-xs text-slate-500">${b.media_type} · ${b.target_page === 'home' ? 'หน้าแรก' : b.target_page === 'catalog' ? 'คลังนิยาย' : 'ชั้นหนังสือ'} · ${b.active ? 'เปิดใช้งาน' : 'ปิดใช้งาน'}</p></div><button onclick="deleteBanner('${b.id}')" class="text-rose-600">ลบ</button></div>`).join('') || '<p class="text-slate-400">ยังไม่มี Banner</p>';
 }
 
 let publicBanners = [], publicBannerIndex = 0;
 function paintPublicBanner() {
   ['home','catalog','bookshelf'].forEach(page => {
     const box = document.getElementById(`public-banners-${page}`); if (!box) return;
-    const b = publicBanners[publicBannerIndex % Math.max(publicBanners.length, 1)];
+    const pageBanners = publicBanners.filter(item => item.target_page === page);
+    const b = pageBanners.length ? pageBanners[publicBannerIndex % pageBanners.length] : null;
     box.innerHTML = b ? `<div onclick="${b.click_type === 'link' ? `window.open('${String(b.click_value || '').replace(/'/g, '')}','_blank')` : `showToast('${String(b.click_value || '').replace(/'/g, '')}','info')`}" class="cursor-pointer rounded-2xl overflow-hidden shadow border border-emerald-100 bg-white">${b.media_type === 'video' ? `<video src="${b.media_url}" autoplay muted loop controls class="w-full max-h-80 object-cover"></video>` : `<img src="${b.media_url}" alt="${b.title}" class="w-full max-h-80 object-cover" />`}<div class="p-3 font-semibold text-emerald-800">${b.title}</div></div>` : '';
   });
 }
@@ -1297,7 +1312,7 @@ async function renderPublicBanners() {
 }
 
 async function saveBanner() {
-  const payload = { title: document.getElementById('banner-title').value.trim(), media_type: document.getElementById('banner-media-type').value, media_url: document.getElementById('banner-media-url').value.trim(), click_type: document.getElementById('banner-click-type').value, click_value: document.getElementById('banner-click-value').value.trim(), sort_order: 0 };
+  const payload = { title: document.getElementById('banner-title').value.trim(), media_type: document.getElementById('banner-media-type').value, media_url: document.getElementById('banner-media-url').value.trim(), target_page: document.getElementById('banner-target-page').value, click_type: document.getElementById('banner-click-type').value, click_value: document.getElementById('banner-click-value').value.trim(), sort_order: 0 };
   if (!payload.title || !payload.media_url) { showToast('กรุณากรอกหัวข้อและ URL Banner', 'warning'); return; }
   const { error } = await supabase.from('banners').insert(payload);
   if (error) { showToast('บันทึก Banner ไม่สำเร็จ: ' + error.message, 'error'); return; }

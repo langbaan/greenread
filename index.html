@@ -1,0 +1,1838 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>นิยายหลังบ้าน 📚 - คลังนิยายออนไลน์ทันสมัย</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Mali:ital,wght@0,200;0,300;0,400;0,500;0,600;0,700;1,400;1,600&display=swap" rel="stylesheet">
+
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        fontFamily: { mali: ['Mali', 'cursive', 'sans-serif'] },
+        colors: {
+          emerald: { 50:'#ecfdf5',100:'#d1fae5',200:'#a7f3d0',300:'#6ee7b7',400:'#34d399',500:'#10b981',600:'#059669',700:'#047857',800:'#065f46',900:'#064e3b' },
+          mint: { light:'#f0fdf4', card:'#f4fbf7', accent:'#86efac' }
+        }
+      }
+    }
+  }
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+  * { font-family: 'Mali', cursive, sans-serif !important; }
+  body { background-color: #f3fbf6; color: #1e293b; }
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-track { background: #e2f5ea; }
+  ::-webkit-scrollbar-thumb { background: #10b981; border-radius: 4px; }
+  ::-webkit-scrollbar-thumb:hover { background: #059669; }
+  .badge-discount { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); }
+  .glass-header { background: rgba(255, 255, 255, 0.92); backdrop-filter: blur(12px); }
+  .hidden { display: none; }
+  .page-view.hidden { display: none; }
+  .modal-backdrop.hidden { display: none; }
+  @media (min-width: 768px) {
+    .nav-desktop { display: flex !important; }
+    .mobile-menu-toggle-btn { display: none !important; }
+  }
+  .line-clamp-2 { display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+  .toast-enter { animation: slideIn .3s ease-out; }
+  @keyframes slideIn { from { transform: translateX(120%); opacity:0; } to { transform: translateX(0); opacity:1; } }
+  .reader-prose img { border-radius: 1rem; margin: 1rem 0; }
+  .spinner { border: 3px solid #d1fae5; border-top-color: #10b981; border-radius: 50%; width: 24px; height: 24px; animation: spin 0.8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .icon-svg { width: 1em; height: 1em; vertical-align: -0.125em; flex-shrink: 0; }
+</style>
+</head>
+<body class="min-h-screen flex flex-col font-mali antialiased selection:bg-emerald-200 selection:text-emerald-900">
+
+<header class="sticky top-0 z-50 glass-header border-b border-emerald-100 shadow-sm transition-all duration-300">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex items-center justify-between h-20">
+
+      <div class="flex items-center space-x-3 cursor-pointer" onclick="navigateTo('home')">
+        <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-emerald-600 to-emerald-400 flex items-center justify-center text-white shadow-lg shadow-emerald-200 transform hover:scale-105 transition-transform">
+          <i data-icon="book" class="text-2xl"></i>
+        </div>
+        <div>
+          <span class="text-2xl font-bold bg-gradient-to-r from-emerald-800 via-emerald-600 to-teal-600 bg-clip-text text-transparent">นิยายหลังบ้าน</span>
+          <span class="block text-xs text-emerald-600 font-medium">คลังนิยายสีเขียวเพื่อคุณ</span>
+        </div>
+      </div>
+
+      <nav class="hidden md:flex nav-desktop items-center space-x-1 lg:space-x-2">
+        <button onclick="navigateTo('home')" id="nav-home" class="nav-btn px-4 py-2.5 rounded-xl font-medium text-slate-700 hover:text-emerald-700 hover:bg-emerald-50 transition-all flex items-center space-x-2">
+          <i data-icon="home" class="text-emerald-500"></i><span>หน้าแรก</span>
+        </button>
+        <button onclick="navigateTo('catalog')" id="nav-catalog" class="nav-btn px-4 py-2.5 rounded-xl font-medium text-slate-700 hover:text-emerald-700 hover:bg-emerald-50 transition-all flex items-center space-x-2">
+          <i data-icon="list" class="text-emerald-500"></i><span>คลังนิยาย</span>
+        </button>
+        <button onclick="navigateTo('bookshelf')" id="nav-bookshelf" class="nav-btn px-4 py-2.5 rounded-xl font-medium text-slate-700 hover:text-emerald-700 hover:bg-emerald-50 transition-all flex items-center space-x-2 relative">
+          <i data-icon="bookmark" class="text-emerald-500"></i><span>ชั้นหนังสือ</span>
+          <span id="liked-count-badge" class="ml-1 bg-rose-500 text-white text-xs px-2 py-0.5 rounded-full font-semibold hidden">0</span>
+        </button>
+      </nav>
+
+      <div class="flex items-center space-x-3">
+        <div onclick="openTopUpModal()" class="flex items-center bg-emerald-100/80 border border-emerald-300 hover:bg-emerald-200 cursor-pointer text-emerald-800 px-3.5 py-1.5 rounded-full text-sm font-semibold shadow-inner transition-all transform hover:scale-105" title="คลิกเพื่อเติมเหรียญ">
+          <i data-icon="coin" class="text-amber-500 mr-2 text-base"></i>
+          <span id="user-coins-display">0</span>
+          <span class="text-xs ml-1 font-normal text-emerald-700">เหรียญ</span>
+          <span class="ml-2 bg-emerald-600 text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold">+ เติม</span>
+        </div>
+
+        <div id="user-account-loggedout" class="flex items-center pl-2 border-l border-slate-200">
+          <button onclick="openAuthModal('login')" class="px-4 py-2 bg-emerald-600 text-white rounded-xl text-sm font-semibold hover:bg-emerald-700 transition-all whitespace-nowrap">เข้าสู่ระบบ</button>
+        </div>
+        <div id="user-account-loggedin" class="hidden items-center space-x-2 pl-2 border-l border-slate-200">
+          <div class="w-10 h-10 rounded-full bg-emerald-100 border-2 border-emerald-400 flex items-center justify-center text-emerald-700 font-bold shadow-sm flex-shrink-0">
+            <span id="account-avatar-initial">น</span>
+          </div>
+          <div class="hidden lg:block text-left min-w-0">
+            <span id="account-display-name" class="block text-xs font-bold text-slate-800 truncate max-w-[120px]"></span>
+            <span id="account-role-label" class="block text-[10px] text-emerald-600"></span>
+          </div>
+          <button onclick="logout()" title="ออกจากระบบ" class="p-2 rounded-lg text-slate-400 hover:bg-rose-50 hover:text-rose-500 transition-all flex-shrink-0"><i data-icon="logout"></i></button>
+        </div>
+
+        <button id="mobile-menu-toggle" onclick="toggleMobileMenu()" class="md:hidden mobile-menu-toggle-btn p-2 rounded-xl text-slate-600 hover:bg-emerald-50 hover:text-emerald-600">
+          <i data-icon="menu" class="text-xl"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div id="mobile-menu" class="hidden md:hidden bg-white border-b border-emerald-100 px-4 pt-2 pb-4 space-y-2">
+    <button onclick="navigateTo('home'); toggleMobileMenu()" class="w-full text-left px-4 py-3 rounded-xl font-medium text-slate-700 hover:bg-emerald-50 flex items-center space-x-3"><i data-icon="home" class="text-emerald-500"></i><span>หน้าแรก</span></button>
+    <button onclick="navigateTo('catalog'); toggleMobileMenu()" class="w-full text-left px-4 py-3 rounded-xl font-medium text-slate-700 hover:bg-emerald-50 flex items-center space-x-3"><i data-icon="list" class="text-emerald-500"></i><span>คลังนิยาย & ตัวกรอง</span></button>
+    <button onclick="navigateTo('bookshelf'); toggleMobileMenu()" class="w-full text-left px-4 py-3 rounded-xl font-medium text-slate-700 hover:bg-emerald-50 flex items-center space-x-3"><i data-icon="bookmark" class="text-emerald-500"></i><span>ชั้นหนังสือของฉัน</span></button>
+  </div>
+</header>
+
+<main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+  <!-- HOME -->
+  <section id="page-home" class="page-view space-y-10">
+    <div id="diagnostic-banner" class="hidden rounded-2xl border-2 border-rose-300 bg-rose-50 p-4 text-sm text-rose-800"></div>
+
+    <div class="relative rounded-3xl bg-gradient-to-r from-emerald-800 via-emerald-700 to-teal-800 text-white p-8 md:p-12 overflow-hidden shadow-xl shadow-emerald-900/10">
+      <div class="absolute -right-10 -bottom-10 w-72 h-72 bg-emerald-500/20 rounded-full blur-3xl pointer-events-none"></div>
+      <div class="absolute right-20 top-0 w-48 h-48 bg-teal-400/20 rounded-full blur-2xl pointer-events-none"></div>
+      <div class="relative z-10 max-w-2xl space-y-4">
+        <span class="inline-block px-3.5 py-1 rounded-full text-xs font-semibold bg-emerald-400/20 text-emerald-200 border border-emerald-400/30">✨ แนะนำประจำสัปดาห์</span>
+        <h1 class="text-3xl md:text-5xl font-extrabold leading-tight tracking-wide">ท่องโลกจินตนาการ <br /><span class="text-emerald-300">ในบรรยากาศสุดผ่อนคลาย</span></h1>
+        <p class="text-emerald-100 text-sm md:text-base leading-relaxed">รวมนิยายหลากมิติ โรแมนติก แฟนตาซี และสืบสวน สอบสวน พร้อมระบบอ่านง่าย สบายตา ดีไซน์เขียวธรรมชาติ</p>
+        <div class="pt-2 flex flex-wrap gap-3">
+          <button onclick="navigateTo('catalog')" class="px-6 py-3 bg-emerald-400 hover:bg-emerald-300 text-emerald-950 font-bold rounded-2xl shadow-lg transition-all transform hover:-translate-y-0.5 flex items-center space-x-2"><i data-icon="compass"></i><span>สำรวจคลังนิยาย</span></button>
+          <button onclick="navigateTo('bookshelf')" class="px-6 py-3 bg-emerald-900/50 hover:bg-emerald-900/80 text-white border border-emerald-400/30 font-semibold rounded-2xl transition-all flex items-center space-x-2"><i data-icon="heart" data-filled="true" class="text-rose-400"></i><span>ดูรายการที่ถูกใจ</span></button>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-xl font-bold text-slate-800 flex items-center space-x-2"><i data-icon="tag" class="text-emerald-600"></i><span>หมวดหมู่ยอดนิยม</span></h2>
+        <button onclick="navigateTo('catalog')" class="text-emerald-600 hover:text-emerald-700 text-sm font-semibold flex items-center space-x-1"><span>ดูทั้งหมด</span><i data-icon="chevronRight" class="text-xs"></i></button>
+      </div>
+      <div id="genre-pills" class="flex flex-wrap gap-2"></div>
+    </div>
+
+    <div>
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-xl font-bold text-slate-800 flex items-center space-x-2"><i data-icon="trending" class="text-emerald-600"></i><span>นิยายแนะนำ</span></h2>
+      </div>
+      <div id="featured-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"></div>
+      <p id="home-empty" class="hidden text-center text-slate-400 py-12"><i data-icon="inbox" class="text-3xl mb-2 block"></i>ยังไม่มีนิยายในระบบตอนนี้</p>
+    </div>
+  </section>
+
+  <!-- CATALOG -->
+  <section id="page-catalog" class="page-view space-y-6 hidden">
+    <h1 class="text-3xl font-bold text-slate-800">คลังนิยาย</h1>
+    <div class="flex flex-col md:flex-row gap-3">
+      <select id="filter-genre" onchange="applyFilters()" class="px-4 py-2 border border-emerald-300 rounded-xl bg-white text-slate-800 font-medium hover:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-400"></select>
+      <select id="filter-sort" onchange="applyFilters()" class="px-4 py-2 border border-emerald-300 rounded-xl bg-white text-slate-800 font-medium hover:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-400">
+        <option value="new">เรื่องใหม่</option>
+        <option value="popular">คะแนนสูงสุด</option>
+        <option value="price-low">ราคาต่ำ-สูง</option>
+        <option value="price-high">ราคาสูง-ต่ำ</option>
+      </select>
+      <input id="filter-search" oninput="applyFilters()" type="text" placeholder="ค้นหาชื่อเรื่อง / ผู้แต่ง..." class="flex-grow px-4 py-2 border border-emerald-300 rounded-xl bg-white text-slate-800 font-medium hover:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-400" />
+      <button onclick="resetFilters()" class="px-4 py-2 bg-emerald-50 border border-emerald-300 rounded-xl text-emerald-700 font-medium hover:bg-emerald-100 transition-all"><i data-icon="reset" class="mr-2"></i>รีเซ็ต</button>
+    </div>
+    <div id="catalog-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"></div>
+    <p id="catalog-empty" class="hidden text-center text-slate-400 py-12"><i data-icon="inbox" class="text-3xl mb-2 block"></i>ไม่พบนิยายที่ตรงกับเงื่อนไข</p>
+  </section>
+
+  <!-- BOOKSHELF -->
+  <section id="page-bookshelf" class="page-view space-y-6 hidden">
+    <h1 class="text-3xl font-bold text-slate-800">ชั้นหนังสือของฉัน</h1>
+    <div id="bookshelf-tabs" class="flex space-x-3 border-b border-slate-200">
+      <button onclick="renderBookshelf('purchased')" id="tab-purchased" class="px-4 py-3 font-semibold border-b-2 transition-colors">ซื้อแล้ว (<span id="count-purchased">0</span>)</button>
+      <button onclick="renderBookshelf('liked')" id="tab-liked" class="px-4 py-3 font-semibold border-b-2 transition-colors">ถูกใจ (<span id="count-liked">0</span>)</button>
+    </div>
+    <div id="bookshelf-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"></div>
+    <p id="bookshelf-empty" class="hidden text-center text-slate-400 py-12"><i data-icon="inbox" class="text-3xl mb-2 block"></i>ยังไม่มีรายการในหมวดนี้</p>
+  </section>
+
+  <!-- READER -->
+  <section id="page-reader" class="page-view hidden">
+    <div class="max-w-4xl mx-auto">
+      <div class="bg-white rounded-2xl p-6 md:p-8 shadow-lg">
+        <div class="flex items-center justify-between mb-4 border-b pb-4 gap-4">
+          <div class="min-w-0">
+            <h1 id="reader-title" class="text-2xl font-bold text-slate-800 truncate"></h1>
+            <p id="reader-author" class="text-sm text-slate-500 mt-1"></p>
+          </div>
+          <div class="flex items-center gap-2 flex-shrink-0">
+            <button onclick="adjustFontSize(-1)" class="w-9 h-9 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold">A-</button>
+            <button onclick="adjustFontSize(1)" class="w-9 h-9 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold">A+</button>
+            <button onclick="navigateTo('catalog')" class="px-4 py-2 bg-emerald-50 text-emerald-600 rounded-xl hover:bg-emerald-100 font-medium"><i data-icon="arrowLeft" class="mr-2"></i>กลับ</button>
+          </div>
+        </div>
+
+        <div class="flex flex-wrap gap-1.5 mb-6" id="chapter-tabs"></div>
+
+        <div id="chapter-title" class="text-xl font-bold text-emerald-700 mb-4"></div>
+
+        <div id="chapter-locked" class="hidden text-center py-16 bg-emerald-50 rounded-2xl border-2 border-dashed border-emerald-300">
+          <i data-icon="lock" class="text-4xl text-emerald-400 mb-4 block mx-auto w-fit"></i>
+          <p class="text-slate-700 font-semibold mb-1">ตอนนี้ต้องใช้เหรียญเพื่ออ่าน</p>
+          <p id="chapter-lock-price" class="text-emerald-700 font-bold text-lg mb-4"></p>
+          <button onclick="purchaseChapter()" class="px-6 py-3 bg-emerald-600 text-white rounded-xl font-semibold hover:bg-emerald-700 shadow-lg"><i data-icon="coin" class="mr-2"></i>ปลดล็อกตอนนี้</button>
+        </div>
+
+        <div id="chapter-content" class="reader-prose max-w-none text-slate-700 leading-relaxed mb-8" style="font-size:16px"></div>
+
+        <div class="flex items-center justify-between border-t pt-6">
+          <button id="btn-prev-chapter" onclick="navigateChapter(-1)" class="px-4 py-2 bg-slate-100 text-slate-700 rounded-xl hover:bg-slate-200 font-medium flex items-center space-x-2 disabled:opacity-40 disabled:cursor-not-allowed"><i data-icon="chevronLeft"></i><span>ตอนก่อนหน้า</span></button>
+          <p id="chapter-counter" class="text-sm text-slate-600 font-medium"></p>
+          <button id="btn-next-chapter" onclick="navigateChapter(1)" class="px-4 py-2 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 font-medium flex items-center space-x-2 disabled:opacity-40 disabled:cursor-not-allowed"><span>ตอนต่อไป</span><i data-icon="chevronRight"></i></button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ADMIN -->
+  <section id="page-admin" class="page-view space-y-6 hidden">
+    <div class="flex items-center justify-between flex-wrap gap-2">
+      <h1 class="text-3xl font-bold text-slate-800">ระบบจัดการแอดมิน</h1>
+      <button onclick="logout()" class="px-4 py-2 bg-rose-50 text-rose-600 rounded-xl font-medium hover:bg-rose-100 flex items-center gap-2"><i data-icon="lock"></i><span>ออกจากระบบแอดมิน</span></button>
+    </div>
+    <div class="flex space-x-3 border-b border-slate-200 overflow-x-auto">
+      <button onclick="switchAdminTab('stats')" id="admin-tab-stats" class="px-4 py-3 font-semibold border-b-2 whitespace-nowrap"><i data-icon="chart" class="mr-2"></i>สถิติการขาย</button>
+      <button onclick="switchAdminTab('novels')" id="admin-tab-novels" class="px-4 py-3 font-semibold border-b-2 whitespace-nowrap"><i data-icon="book" class="mr-2"></i>จัดการนิยาย</button>
+      <button onclick="switchAdminTab('packages')" id="admin-tab-packages" class="px-4 py-3 font-semibold border-b-2 whitespace-nowrap"><i data-icon="coin" class="mr-2"></i>ชุดเหรียญ</button>
+    </div>
+
+    <div id="admin-stats-content" class="space-y-6">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="bg-gradient-to-br from-emerald-50 to-emerald-100 p-6 rounded-2xl border border-emerald-200"><p class="text-slate-600 text-sm font-medium">รายรับวันนี้</p><p id="stat-today-revenue" class="text-3xl font-bold text-emerald-700 mt-2">฿0</p></div>
+        <div class="bg-gradient-to-br from-blue-50 to-blue-100 p-6 rounded-2xl border border-blue-200"><p class="text-slate-600 text-sm font-medium">ยอดขายทั้งหมด</p><p id="stat-total-revenue" class="text-3xl font-bold text-blue-700 mt-2">฿0</p></div>
+        <div class="bg-gradient-to-br from-purple-50 to-purple-100 p-6 rounded-2xl border border-purple-200"><p class="text-slate-600 text-sm font-medium">จำนวนออเดอร์</p><p id="stat-total-customers" class="text-3xl font-bold text-purple-700 mt-2">0</p></div>
+      </div>
+      <div class="bg-white p-6 rounded-2xl border border-slate-200"><h3 class="text-lg font-bold text-slate-800 mb-4">กราฟรายรับรายวัน (7 วันล่าสุด)</h3><canvas id="sales-chart" height="80"></canvas></div>
+      <div class="bg-white p-6 rounded-2xl border border-slate-200">
+        <div class="flex justify-between items-center mb-4 flex-wrap gap-2">
+          <h3 class="text-lg font-bold text-slate-800">รายการขายล่าสุด</h3>
+          <button onclick="exportSalesTableCSV()" class="px-4 py-2 bg-emerald-100 text-emerald-700 rounded-lg font-medium hover:bg-emerald-200"><i data-icon="download" class="mr-2"></i>ดาวน์โหลด CSV</button>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead class="bg-slate-50 border-b"><tr><th class="p-3 text-left font-semibold text-slate-700">ออเดอร์</th><th class="p-3 text-left font-semibold text-slate-700">วันที่</th><th class="p-3 text-left font-semibold text-slate-700">รายการ</th><th class="p-3 text-left font-semibold text-slate-700">ราคา</th><th class="p-3 text-left font-semibold text-slate-700">สถานะ</th></tr></thead>
+            <tbody id="sales-table-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div id="admin-novels-content" class="hidden space-y-4">
+      <button onclick="openNovelModal()" class="px-6 py-3 bg-emerald-600 text-white rounded-xl font-semibold hover:bg-emerald-700 flex items-center space-x-2"><i data-icon="plus"></i><span>เพิ่มนิยายเรื่องใหม่</span></button>
+      <div class="bg-white p-6 rounded-2xl border border-slate-200 overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead class="bg-slate-50 border-b"><tr><th class="p-3 text-left font-semibold text-slate-700">ปก</th><th class="p-3 text-left font-semibold text-slate-700">ชื่อเรื่อง</th><th class="p-3 text-left font-semibold text-slate-700">หมวด</th><th class="p-3 text-left font-semibold text-slate-700">สถานะ</th><th class="p-3 text-left font-semibold text-slate-700">ราคา</th><th class="p-3 text-left font-semibold text-slate-700">ตอน</th><th class="p-3 text-left font-semibold text-slate-700">การดำเนินการ</th></tr></thead>
+          <tbody id="admin-novels-table"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div id="admin-packages-content" class="hidden space-y-4">
+      <button onclick="openCoinPackageModal()" class="px-6 py-3 bg-emerald-600 text-white rounded-xl font-semibold hover:bg-emerald-700 flex items-center space-x-2"><i data-icon="plus"></i><span>เพิ่มชุดเหรียญใหม่</span></button>
+      <div id="coin-packages-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+    </div>
+  </section>
+</main>
+
+<footer class="border-t border-emerald-100 bg-white/60 py-6 mt-8">
+  <div class="max-w-7xl mx-auto px-4 text-center text-xs text-slate-400 space-y-3">
+    <div>นิยายหลังบ้าน — เชื่อมต่อฐานข้อมูลจริงผ่าน Supabase และชำระเงินผ่าน Beam Checkout (PromptPay)</div>
+    <div class="flex items-center justify-center gap-3 flex-wrap">
+      <button onclick="openPolicyModal('terms')" class="text-slate-400 hover:text-emerald-600 underline">เงื่อนไขการให้บริการ</button>
+      <span class="text-slate-300">·</span>
+      <button onclick="openPolicyModal('refund')" class="text-slate-400 hover:text-emerald-600 underline">นโยบายการคืนเงิน</button>
+      <span class="text-slate-300">·</span>
+      <a href="https://web.facebook.com/profile.php?id=61587873743048" target="_blank" rel="noopener noreferrer" class="text-slate-400 hover:text-emerald-600 underline">ติดต่อเรา (Facebook)</a>
+    </div>
+    <button id="footer-admin-link" onclick="handleAdminNavClick()" class="text-slate-400 hover:text-emerald-600 underline">เข้าสู่ระบบแอดมิน</button>
+    <div id="footer-admin-logged-in" style="display:none" class="flex items-center justify-center gap-2">
+      <span class="text-emerald-600 font-semibold">เข้าสู่ระบบแอดมินแล้ว</span>
+      <button onclick="logout()" class="text-rose-500 hover:text-rose-600 underline">ออกจากระบบ</button>
+    </div>
+  </div>
+</footer>
+
+<!-- TOP UP MODAL -->
+<div id="topup-modal" class="modal-backdrop hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+  <div class="bg-white rounded-3xl max-w-md w-full p-8 shadow-2xl max-h-[90vh] overflow-y-auto">
+    <div class="flex justify-between items-center mb-6"><h2 class="text-2xl font-bold text-slate-800">เติมเหรียญ</h2><button onclick="closeModal('topup-modal')" class="text-slate-400 hover:text-slate-600 text-2xl"><i data-icon="close"></i></button></div>
+    <div class="space-y-3" id="coin-packages-modal"></div>
+    <div class="mt-6 p-4 bg-emerald-50 rounded-xl border border-emerald-200"><p class="text-xs text-slate-600 text-center"><i data-icon="shieldCheck" class="text-emerald-600 mr-2"></i>ชำระเงินปลอดภัยผ่าน Beam Checkout (PromptPay) — ระบบเติมเหรียญให้อัตโนมัติเมื่อชำระเงินสำเร็จ</p></div>
+  </div>
+</div>
+
+<!-- PAYMENT MODAL -->
+<div id="payment-modal" class="modal-backdrop hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+  <div class="bg-white rounded-3xl max-w-md w-full p-8 shadow-2xl max-h-[90vh] overflow-y-auto">
+    <div class="flex justify-between items-center mb-6"><h2 class="text-2xl font-bold text-slate-800">ยืนยันการชำระเงิน</h2><button onclick="closeModal('payment-modal')" class="text-slate-400 hover:text-slate-600 text-2xl"><i data-icon="close"></i></button></div>
+    <div class="bg-emerald-50 p-4 rounded-xl mb-6 border border-emerald-200 flex justify-between items-center">
+      <div><p class="text-slate-600 text-sm">แพ็กเกจ</p><p id="payment-pkg-label" class="font-bold text-emerald-900"></p></div>
+      <div class="text-right"><p class="text-slate-600 text-sm">ราคารวม</p><p id="payment-total" class="text-2xl font-bold text-emerald-700">฿0</p></div>
+    </div>
+
+    <div id="payment-qr-loading" class="hidden text-center py-10 space-y-3">
+      <div class="spinner mx-auto"></div>
+      <p class="text-slate-500 text-sm">กำลังสร้าง QR PromptPay จาก Beam...</p>
+    </div>
+
+    <div id="payment-qr-unavailable" class="hidden text-center py-8 space-y-3">
+      <i data-icon="alertTriangle" class="text-3xl text-amber-500 block mx-auto w-fit"></i>
+      <p class="text-slate-600 text-sm">ไม่สามารถสร้าง QR ได้ในขณะนี้ กรุณาตรวจสอบอินเทอร์เน็ตแล้วลองใหม่</p>
+      <button onclick="startPromptPayQR()" class="px-6 py-2 bg-emerald-600 text-white rounded-xl font-semibold hover:bg-emerald-700">ลองอีกครั้ง</button>
+    </div>
+
+    <div id="payment-qr-area" class="hidden text-center space-y-4">
+      <p class="text-sm text-slate-600 font-semibold flex items-center justify-center gap-2"><i data-icon="qrcode" class="text-purple-600"></i>สแกน QR ด้วยแอปธนาคารเพื่อชำระเงินผ่าน PromptPay (Beam)</p>
+      <div class="flex justify-center">
+        <div class="p-4 bg-white border-2 border-purple-200 rounded-2xl inline-block">
+          <img id="qr-image" alt="PromptPay QR" class="w-56 h-56 object-contain" />
+        </div>
+      </div>
+      <p id="qr-ref-label" class="text-xs text-slate-400 font-mono"></p>
+      <p class="text-[11px] text-slate-400">ระบบจะเติมเหรียญให้อัตโนมัติทันทีที่ตรวจพบการชำระเงิน (ปกติภายในไม่กี่วินาที)</p>
+      <div class="flex gap-2">
+        <button onclick="downloadQRCode()" class="flex-1 px-4 py-3 bg-slate-100 text-slate-700 rounded-xl font-semibold hover:bg-slate-200 flex items-center justify-center gap-2"><i data-icon="download"></i><span>ดาวน์โหลด QR</span></button>
+        <button onclick="confirmQrPayment()" class="flex-1 px-4 py-3 bg-emerald-600 text-white rounded-xl font-semibold hover:bg-emerald-700">ฉันชำระเงินแล้ว / เช็คสถานะ</button>
+      </div>
+      <button onclick="cancelQrPayment()" class="text-xs text-slate-400 hover:text-slate-600 underline">ยกเลิก กลับไปเลือกแพ็กเกจใหม่</button>
+      <p class="text-[11px] text-slate-400 pt-2 border-t border-slate-100">จ่ายเงินแล้วแต่เหรียญไม่เข้า? <a href="https://web.facebook.com/profile.php?id=61587873743048" target="_blank" rel="noopener noreferrer" class="text-emerald-600 underline">ติดต่อทีมงานผ่าน Facebook</a></p>
+    </div>
+  </div>
+</div>
+
+<!-- NOVEL MODAL -->
+<div id="novel-modal" class="modal-backdrop hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 overflow-y-auto">
+  <div class="bg-white rounded-3xl max-w-2xl w-full p-8 shadow-2xl my-8">
+    <div class="flex justify-between items-center mb-6"><h2 id="modal-title" class="text-2xl font-bold text-slate-800">เพิ่มนิยายเรื่องใหม่</h2><button onclick="closeModal('novel-modal')" class="text-slate-400 hover:text-slate-600 text-2xl"><i data-icon="close"></i></button></div>
+    <form id="novel-form" onsubmit="saveNovelForm(event)" class="space-y-4">
+      <input type="hidden" id="form-novel-id" />
+      <div class="grid grid-cols-2 gap-4">
+        <input type="text" id="form-title" placeholder="ชื่อนิยาย" required class="px-4 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-400" />
+        <input type="text" id="form-author" placeholder="ผู้แต่ง" required class="px-4 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-400" />
+      </div>
+      <div class="grid grid-cols-2 gap-4">
+        <select id="form-genre" required class="px-4 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-400">
+          <option value="">เลือกหมวด</option>
+          <option value="โรแมนติก">โรแมนติก</option>
+          <option value="แฟนตาซี">แฟนตาซี</option>
+          <option value="กำลังภายใน">กำลังภายใน</option>
+          <option value="สืบสวน">สืบสวน</option>
+          <option value="สยองขวัญ">สยองขวัญ</option>
+        </select>
+        <input type="number" id="form-price-per-chapter" placeholder="ราคาต่อตอน (เหรียญ)" min="0" required class="px-4 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-400" />
+      </div>
+      <select id="form-status" class="w-full px-4 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-400">
+        <option value="ongoing">ยังไม่จบ (กำลังลงตอนใหม่)</option>
+        <option value="completed">จบแล้ว</option>
+      </select>
+      <div class="space-y-2">
+        <label class="text-xs font-semibold text-slate-600">ภาพปกนิยาย</label>
+        <div class="flex items-start gap-3">
+          <img id="cover-preview" src="" alt="ตัวอย่างปก" class="w-16 h-24 object-cover rounded-lg border border-slate-200 bg-slate-100 hidden flex-shrink-0" />
+          <div class="flex-grow space-y-2 min-w-0">
+            <input type="text" id="form-cover" oninput="updateCoverPreviewFromUrl()" placeholder="URL ปกนิยาย (หรืออัปโหลดไฟล์ด้านล่าง)" class="w-full px-4 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-400" />
+            <div class="flex items-center gap-2 flex-wrap">
+              <button type="button" onclick="document.getElementById('form-cover-file').click()" class="px-3 py-1.5 bg-emerald-50 border border-emerald-300 text-emerald-700 rounded-lg text-xs font-semibold hover:bg-emerald-100 flex items-center gap-1"><i data-icon="upload" class="text-sm"></i><span>อัปโหลดจากเครื่อง</span></button>
+              <button type="button" id="clear-cover-upload-btn" onclick="clearCoverUpload()" class="hidden px-3 py-1.5 bg-slate-100 text-slate-500 rounded-lg text-xs font-semibold hover:bg-slate-200">ล้างรูปที่อัปโหลด</button>
+              <input type="file" id="form-cover-file" accept="image/*" class="hidden" onchange="handleCoverFileSelect(event)" />
+            </div>
+            <p class="text-[11px] text-slate-400">ถ้าไม่ใส่ URL หรืออัปโหลดรูป ระบบจะสร้างปกให้อัตโนมัติตามหมวดหมู่</p>
+          </div>
+        </div>
+      </div>
+      <textarea id="form-synopsis" placeholder="คำอธิบายนิยาย" rows="3" class="w-full px-4 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-400"></textarea>
+      <p class="text-xs text-slate-500 bg-slate-50 border border-slate-200 rounded-xl p-3"><i data-icon="info" class="mr-1 text-blue-500"></i>บันทึกข้อมูลนิยายก่อน แล้วกดปุ่ม "จัดการตอน" ในตารางเพื่อเพิ่มตอนใหม่ได้ทุกเมื่อ ไม่จำกัดจำนวนตอน — ราคาต่อตอนด้านบนเป็นเพียงค่าเริ่มต้น กำหนดราคาจริงและตั้งฟรีแยกได้เป็นรายตอน</p>
+      <div class="flex gap-2 pt-4">
+        <button type="submit" class="flex-1 px-4 py-3 bg-emerald-600 text-white rounded-xl font-semibold hover:bg-emerald-700">บันทึก</button>
+        <button type="button" onclick="closeModal('novel-modal')" class="flex-1 px-4 py-3 bg-slate-200 text-slate-700 rounded-xl font-semibold hover:bg-slate-300">ยกเลิก</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- CHAPTER MANAGER MODAL -->
+<div id="chapter-modal" class="modal-backdrop hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 overflow-y-auto">
+  <div class="bg-white rounded-3xl max-w-2xl w-full p-8 shadow-2xl my-8">
+    <div class="flex justify-between items-center mb-1">
+      <div>
+        <h2 class="text-2xl font-bold text-slate-800">จัดการตอนนิยาย</h2>
+        <p id="chapter-modal-novel-title" class="text-sm text-emerald-600 font-semibold"></p>
+      </div>
+      <button onclick="closeModal('chapter-modal')" class="text-slate-400 hover:text-slate-600 text-2xl"><i data-icon="close"></i></button>
+    </div>
+
+    <div id="chapter-manager-list" class="space-y-2 my-4 max-h-56 overflow-y-auto pr-1"></div>
+
+    <div class="border-t pt-4 mt-2">
+      <h3 id="chapter-form-heading" class="text-sm font-bold text-slate-700 mb-3">เพิ่มตอนใหม่</h3>
+      <form id="chapter-form" onsubmit="saveChapterForm(event)" class="space-y-3">
+        <input type="hidden" id="chapter-form-chapter-number" />
+        <input type="text" id="chapter-form-title" placeholder="ชื่อตอน เช่น บทที่ 4: ผจญภัยครั้งใหม่" required class="w-full px-4 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-400" />
+        <div class="flex items-center gap-2 flex-wrap">
+          <button type="button" onclick="insertChapterImageFromUrl()" class="px-3 py-1.5 bg-slate-100 text-slate-600 rounded-lg text-xs font-semibold hover:bg-slate-200 flex items-center gap-1"><i data-icon="image" class="text-sm"></i><span>แทรกรูปจาก URL</span></button>
+          <button type="button" onclick="document.getElementById('chapter-form-image-file').click()" class="px-3 py-1.5 bg-slate-100 text-slate-600 rounded-lg text-xs font-semibold hover:bg-slate-200 flex items-center gap-1"><i data-icon="upload" class="text-sm"></i><span>แทรกรูปจากเครื่อง</span></button>
+          <input type="file" id="chapter-form-image-file" accept="image/*" class="hidden" onchange="handleChapterImageFileSelect(event)" />
+        </div>
+        <textarea id="chapter-form-content" placeholder="เนื้อหาตอนนี้... (สามารถแทรกรูปภาพด้วยปุ่มด้านบนได้)" rows="5" required class="w-full px-4 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-400"></textarea>
+        <div class="flex items-center gap-3 flex-wrap">
+          <input type="number" id="chapter-form-price" placeholder="ราคาตอนนี้ (เหรียญ)" min="0" class="flex-grow min-w-[140px] px-4 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-400" />
+          <label class="text-xs text-slate-500 flex items-center gap-2 flex-shrink-0"><input type="checkbox" id="chapter-form-free" onchange="toggleChapterPriceField()" class="rounded" /> ตอนนี้อ่านฟรี (ไม่หักเหรียญ)</label>
+        </div>
+        <div class="flex gap-2 pt-2">
+          <button type="submit" id="chapter-form-submit-btn" class="flex-1 px-4 py-3 bg-emerald-600 text-white rounded-xl font-semibold hover:bg-emerald-700">เพิ่มตอนใหม่</button>
+          <button type="button" id="chapter-form-cancel-btn" onclick="cancelChapterEdit()" class="hidden px-4 py-3 bg-slate-200 text-slate-700 rounded-xl font-semibold hover:bg-slate-300">ยกเลิกแก้ไข</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- COIN PACKAGE MODAL -->
+<div id="coin-package-modal" class="modal-backdrop hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+  <div class="bg-white rounded-3xl max-w-md w-full p-8 shadow-2xl">
+    <div class="flex justify-between items-center mb-6"><h2 id="package-modal-title" class="text-2xl font-bold text-slate-800">เพิ่มชุดเหรียญ</h2><button onclick="closeModal('coin-package-modal')" class="text-slate-400 hover:text-slate-600 text-2xl"><i data-icon="close"></i></button></div>
+    <form id="coin-package-form" onsubmit="saveCoinPackage(event)" class="space-y-4">
+      <input type="hidden" id="form-package-id" />
+      <input type="number" id="form-coin-amount" placeholder="จำนวนเหรียญ" min="1" required class="w-full px-4 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-400" />
+      <input type="number" id="form-package-price" placeholder="ราคา (บาท)" step="0.01" min="0" required class="w-full px-4 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-400" />
+      <input type="number" id="form-bonus-coins" placeholder="เหรียญโบนัส (ถ้ามี)" min="0" class="w-full px-4 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-400" />
+      <input type="text" id="form-package-tag" placeholder="ป้ายกำกับ เช่น ขายดีที่สุด 🔥" class="w-full px-4 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-400" />
+      <div class="flex gap-2 pt-4">
+        <button type="submit" class="flex-1 px-4 py-3 bg-emerald-600 text-white rounded-xl font-semibold hover:bg-emerald-700">บันทึก</button>
+        <button type="button" onclick="closeModal('coin-package-modal')" class="flex-1 px-4 py-3 bg-slate-200 text-slate-700 rounded-xl font-semibold hover:bg-slate-300">ยกเลิก</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- AUTH MODAL -->
+<div id="auth-modal" class="modal-backdrop hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+  <div class="bg-white rounded-3xl max-w-sm w-full p-8 shadow-2xl">
+    <div class="flex justify-between items-center mb-4">
+      <h2 class="text-2xl font-bold text-slate-800">เข้าสู่ระบบ</h2>
+      <button onclick="closeModal('auth-modal')" class="text-slate-400 hover:text-slate-600 text-2xl"><i data-icon="close"></i></button>
+    </div>
+    <div class="flex mb-6 bg-slate-100 rounded-xl p-1">
+      <button type="button" id="auth-tab-login" onclick="switchAuthTab('login')" class="flex-1 py-2 rounded-lg text-sm font-semibold transition-all">เข้าสู่ระบบ</button>
+      <button type="button" id="auth-tab-signup" onclick="switchAuthTab('signup')" class="flex-1 py-2 rounded-lg text-sm font-semibold transition-all">สมัครสมาชิก</button>
+    </div>
+
+    <form id="login-form" onsubmit="submitLogin(event)" class="space-y-4">
+      <input type="email" id="login-email" placeholder="อีเมล" required autocomplete="username" class="w-full px-4 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-400" />
+      <input type="password" id="login-password" placeholder="รหัสผ่าน" required autocomplete="current-password" class="w-full px-4 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-400" />
+      <p id="login-error" class="hidden text-xs text-rose-600 bg-rose-50 border border-rose-200 rounded-lg p-2"></p>
+      <button type="submit" class="w-full px-4 py-3 bg-emerald-600 text-white rounded-xl font-semibold hover:bg-emerald-700">เข้าสู่ระบบ</button>
+    </form>
+
+    <form id="signup-form" onsubmit="submitSignup(event)" class="hidden space-y-4">
+      <input type="text" id="signup-displayname" placeholder="ชื่อที่แสดง (ไม่บังคับ)" class="w-full px-4 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-400" />
+      <input type="email" id="signup-email" placeholder="อีเมล" required autocomplete="username" class="w-full px-4 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-400" />
+      <input type="password" id="signup-password" placeholder="รหัสผ่าน (อย่างน้อย 6 ตัวอักษร)" required minlength="6" autocomplete="new-password" class="w-full px-4 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-400" />
+      <p id="signup-error" class="hidden text-xs text-rose-600 bg-rose-50 border border-rose-200 rounded-lg p-2"></p>
+      <button type="submit" class="w-full px-4 py-3 bg-emerald-600 text-white rounded-xl font-semibold hover:bg-emerald-700">สมัครสมาชิก</button>
+    </form>
+    <p class="text-[11px] text-slate-400 mt-4 text-center">การเป็นแอดมินต้องตั้งค่าเพิ่มใน Supabase หลังสมัคร (ดู README)</p>
+  </div>
+</div>
+
+<!-- POLICY MODAL -->
+<div id="policy-modal" class="modal-backdrop hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 overflow-y-auto">
+  <div class="bg-white rounded-3xl max-w-2xl w-full p-8 shadow-2xl my-8">
+    <div class="flex justify-between items-center mb-4">
+      <h2 id="policy-modal-title" class="text-2xl font-bold text-slate-800">เงื่อนไขการให้บริการ</h2>
+      <button onclick="closeModal('policy-modal')" class="text-slate-400 hover:text-slate-600 text-2xl"><i data-icon="close"></i></button>
+    </div>
+    <div class="flex mb-6 bg-slate-100 rounded-xl p-1">
+      <button type="button" id="policy-tab-terms" onclick="switchPolicyTab('terms')" class="flex-1 py-2 rounded-lg text-sm font-semibold transition-all">เงื่อนไขการให้บริการ</button>
+      <button type="button" id="policy-tab-refund" onclick="switchPolicyTab('refund')" class="flex-1 py-2 rounded-lg text-sm font-semibold transition-all">นโยบายการคืนเงิน</button>
+    </div>
+
+    <div id="policy-content-terms" class="space-y-3 text-sm text-slate-600 leading-relaxed max-h-[55vh] overflow-y-auto pr-1">
+      <p><strong>1. การใช้งานเว็บไซต์</strong><br>ผู้ใช้ต้องใช้งานเว็บไซต์นี้โดยสุจริต ไม่ละเมิดกฎหมาย และรับผิดชอบต่อการกระทำของตนเองผ่านบัญชีที่สมัครไว้</p>
+      <p><strong>2. เหรียญ (Coins)</strong><br>เหรียญเป็นสกุลเงินเสมือนสำหรับปลดล็อกเนื้อหาภายในเว็บไซต์นี้เท่านั้น ไม่สามารถแลกเปลี่ยนเป็นเงินสด โอนให้ผู้ใช้อื่น หรือนำไปใช้นอกแพลตฟอร์มได้ในทุกกรณี</p>
+      <p><strong>3. ลิขสิทธิ์เนื้อหา</strong><br>นิยายและเนื้อหาทุกเรื่องในเว็บไซต์เป็นลิขสิทธิ์ของผู้เขียน/เจ้าของเว็บไซต์ ห้ามคัดลอก ทำซ้ำ ดัดแปลง หรือเผยแพร่ต่อโดยไม่ได้รับอนุญาตเป็นลายลักษณ์อักษร</p>
+      <p><strong>4. บัญชีผู้ใช้</strong><br>ผู้ใช้มีหน้าที่รักษาความปลอดภัยของบัญชีและรหัสผ่านของตนเอง เว็บไซต์ขอสงวนสิทธิ์ระงับหรือยกเลิกบัญชีที่ละเมิดเงื่อนไขการให้บริการโดยไม่ต้องแจ้งล่วงหน้า</p>
+      <p><strong>5. การเปลี่ยนแปลงเงื่อนไข</strong><br>เว็บไซต์ขอสงวนสิทธิ์ในการปรับปรุงเงื่อนไขการให้บริการได้ตลอดเวลา โดยจะแจ้งให้ทราบผ่านหน้าเว็บไซต์</p>
+    </div>
+
+    <div id="policy-content-refund" class="hidden space-y-3 text-sm text-slate-600 leading-relaxed max-h-[55vh] overflow-y-auto pr-1">
+      <p><strong>1. เหรียญที่เติมสำเร็จแล้ว</strong><br>เมื่อชำระเงินและได้รับเหรียญเข้าบัญชีเรียบร้อยแล้ว ถือเป็นการซื้อขายที่สมบูรณ์ ไม่สามารถขอคืนเงินได้ ยกเว้นกรณีระบบผิดพลาดตามข้อ 2</p>
+      <p><strong>2. กรณีชำระเงินสำเร็จแต่ไม่ได้รับเหรียญ</strong><br>หากเกิดปัญหาระบบขัดข้อง (จ่ายเงินแล้วแต่ไม่ได้รับเหรียญ) กรุณาติดต่อทีมงานพร้อมแนบหลักฐานการชำระเงิน (สลิป/เลขอ้างอิงคำสั่งซื้อ) ภายใน 7 วันนับจากวันที่ทำรายการ ทีมงานจะตรวจสอบและดำเนินการแก้ไขให้โดยเร็วที่สุด</p>
+      <p><strong>3. กรณีอื่นๆ</strong><br>การพิจารณาคืนเงินในกรณีนอกเหนือจากข้อ 2 ขึ้นอยู่กับดุลยพินิจของทีมงานเป็นรายกรณีไป</p>
+      <p><strong>4. ช่องทางติดต่อ</strong><br>สอบถามหรือแจ้งปัญหาการชำระเงินได้ที่ <a href="https://web.facebook.com/profile.php?id=61587873743048" target="_blank" rel="noopener noreferrer" class="text-emerald-600 underline font-semibold">เพจ Facebook ของเรา</a></p>
+    </div>
+
+    <p class="text-[11px] text-amber-700 bg-amber-50 rounded-lg p-2 mt-4">* ข้อความนี้เป็นแบบร่างเบื้องต้น แนะนำให้ตรวจทาน/ปรับให้ตรงกับนโยบายจริงของร้าน และควรปรึกษาผู้เชี่ยวชาญด้านกฎหมายก่อนเผยแพร่ใช้งานจริง</p>
+  </div>
+</div>
+
+<div id="toast-container" class="fixed bottom-4 right-4 space-y-2 z-[100] max-w-xs"></div>
+
+<script>
+/* =========================================================
+   นิยายหลังบ้าน — เชื่อมต่อฐานข้อมูลจริงผ่าน Supabase (Auth + Postgres + Realtime)
+   และชำระเงินจริงผ่าน Beam Checkout PromptPay (ผ่าน Supabase Edge Functions)
+   ========================================================= */
+
+const SUPABASE_URL = 'https://tuyiwlkeneyhrxnkjrfd.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR1eWl3bGtlbmV5aHJ4bmtqcmZkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODkzNjI1NTksImV4cCI6MjEwNDkzODU1OX0.cCEf5nczpDHGscVNW96JTpjXQA-GBIi8eX5NpsqANa4';
+
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+const ICON_PATHS = {
+  home: '<polyline points="9 22 9 12 15 12 15 22"></polyline><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"></path>',
+  book: '<path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z"></path><path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z"></path>',
+  bookmark: '<path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"></path>',
+  chart: '<line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line>',
+  coin: '<circle cx="12" cy="12" r="9"></circle><circle cx="12" cy="12" r="5"></circle>',
+  menu: '<line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line>',
+  compass: '<circle cx="12" cy="12" r="10"></circle><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon>',
+  heart: '<path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"></path>',
+  tag: '<path d="M20.59 13.41L13.41 20.59a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line>',
+  trending: '<polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline>',
+  chevronRight: '<polyline points="9 18 15 12 9 6"></polyline>',
+  chevronLeft: '<polyline points="15 18 9 12 15 6"></polyline>',
+  reset: '<polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 102.13-9.36L1 10"></path>',
+  inbox: '<polyline points="22 12 16 12 14 15 10 15 8 12 2 12"></polyline><path d="M5.45 5.11L2 12v6a2 2 0 002 2h16a2 2 0 002-2v-6l-3.45-6.89A2 2 0 0016.76 4H7.24a2 2 0 00-1.79 1.11z"></path>',
+  lock: '<rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0110 0v4"></path>',
+  edit: '<path d="M17 3a2.828 2.828 0 114 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path>',
+  trash: '<polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line>',
+  plus: '<line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line>',
+  download: '<path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line>',
+  close: '<line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line>',
+  shieldCheck: '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path><polyline points="9 12 11 14 15 10"></polyline>',
+  card: '<rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line>',
+  qrcode: '<rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect><rect x="14" y="14" width="3" height="3"></rect><rect x="18" y="14" width="3" height="3"></rect><rect x="14" y="18" width="3" height="3"></rect><rect x="18" y="18" width="3" height="3"></rect>',
+  star: '<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>',
+  check: '<path d="M22 11.08V12a10 10 0 11-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline>',
+  alertCircle: '<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line>',
+  alertTriangle: '<path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line>',
+  info: '<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line>',
+  arrowLeft: '<line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline>',
+  list: '<line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line>',
+  checkSquare: '<polyline points="9 11 12 14 22 4"></polyline><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"></path>',
+  clock: '<circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>',
+  upload: '<path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line>',
+  image: '<rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline>',
+  logout: '<path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line>'
+};
+
+function icon(name, cls = '', filled = false) {
+  const body = ICON_PATHS[name];
+  if (!body) return '';
+  const fillAttr = filled ? 'currentColor' : 'none';
+  return `<svg class="icon-svg inline-block ${cls}" viewBox="0 0 24 24" fill="${fillAttr}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${body}</svg>`;
+}
+
+function replaceStaticIcons() {
+  document.querySelectorAll('i[data-icon]').forEach(el => {
+    const name = el.getAttribute('data-icon');
+    const filled = el.getAttribute('data-filled') === 'true';
+    const cls = el.getAttribute('class') || '';
+    el.outerHTML = icon(name, cls, filled);
+  });
+}
+
+const GENRE_COVER_COLORS = {
+  'โรแมนติก': ['#f9a8d4', '#db2777'],
+  'แฟนตาซี': ['#c4b5fd', '#7c3aed'],
+  'กำลังภายใน': ['#6ee7b7', '#047857'],
+  'สืบสวน': ['#93c5fd', '#1d4ed8'],
+  'สยองขวัญ': ['#fca5a5', '#b91c1c']
+};
+
+function createPlaceholderCoverDataUri(genre) {
+  const colors = GENRE_COVER_COLORS[genre] || ['#6ee7b7', '#059669'];
+  const label = (genre || 'นิยาย').replace(/[<>&]/g, '');
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="400" height="560" viewBox="0 0 400 560">
+    <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="${colors[0]}"/><stop offset="100%" stop-color="${colors[1]}"/>
+    </linearGradient></defs>
+    <rect width="400" height="560" fill="url(#g)"/>
+    <g transform="translate(140,190) scale(4.5)" fill="none" stroke="#ffffff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" opacity="0.92">
+      <path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z"></path>
+      <path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z"></path>
+    </g>
+    <text x="200" y="460" font-family="sans-serif" font-size="26" fill="#ffffff" text-anchor="middle" opacity="0.9">${label}</text>
+  </svg>`;
+  return 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
+}
+
+function handleCoverImgError(imgEl, genre) {
+  imgEl.onerror = null;
+  imgEl.src = createPlaceholderCoverDataUri(genre);
+}
+
+let novels = [];
+let coinPackages = [];
+let likedNovelIds = new Set();
+
+let currentUser = null;
+let currentProfile = null;
+let isAdmin = false;
+let pendingAdminRedirect = false;
+
+let salesOrdersCache = [];
+let adminChaptersCache = [];
+
+let currentReaderNovelId = null;
+let currentChapterIndex = 0;
+let salesChartInstance = null;
+let selectedCoinPackage = null;
+let readerFontSize = 16;
+let chapterManagerNovelId = null;
+let qrPaymentRef = null;
+let pendingCoverDataUri = null;
+let currentOrderId = null;
+let orderRealtimeChannel = null;
+let orderPollInterval = null;
+
+// ---------- DIAGNOSTIC BANNER — โชว์ error บนหน้าเว็บตรงๆ ไม่ต้องเปิด Console ----------
+function showDiagnostic(html) {
+  const el = document.getElementById('diagnostic-banner');
+  if (!el) return;
+  el.innerHTML = html;
+  el.classList.remove('hidden');
+}
+function clearDiagnostic() {
+  const el = document.getElementById('diagnostic-banner');
+  if (!el) return;
+  el.classList.add('hidden');
+  el.innerHTML = '';
+}
+
+async function loadNovels() {
+  const { data, error } = await supabase.from('novels').select('*').order('created_at', { ascending: false });
+  if (error) {
+    console.error('loadNovels error:', error);
+    showToast('โหลดข้อมูลนิยายไม่สำเร็จ ตรวจสอบการตั้งค่า Supabase', 'error');
+    showDiagnostic(
+      `<b>โหลดนิยายไม่สำเร็จ (มี error จาก Supabase)</b><br>
+       รหัส: ${error.code || '-'} · ${error.message || 'ไม่ทราบสาเหตุ'}<br>
+       <span class="text-xs">สาเหตุที่พบบ่อย: URL/ANON_KEY ในไฟล์นี้ผิด หรือยังไม่ได้รัน setup.sql บนโปรเจกต์นี้</span>`
+    );
+    novels = [];
+    return;
+  }
+  novels = (data || []).map(n => ({
+    id: n.id, title: n.title, author: n.author, genre: n.genre,
+    pricePerChapter: Number(n.price_per_chapter) || 0,
+    rating: Number(n.rating) || 0, viewCount: n.view_count || 0,
+    status: n.status, cover: n.cover_url || createPlaceholderCoverDataUri(n.genre),
+    synopsis: n.synopsis || '', chapters: []
+  }));
+  if (novels.length === 0) {
+    showDiagnostic(
+      `<b>เชื่อมต่อ Supabase สำเร็จ แต่ไม่พบนิยายเลย (0 แถว)</b><br>
+       <span class="text-xs">เช็ค 2 จุด: (1) ตาราง novels มีข้อมูลจริงไหมใน Table Editor
+       (2) รัน setup.sql ครบทั้งไฟล์แล้วหรือยัง — ถ้ายังไม่ครบ ตาราง novels อาจถูก RLS
+       บล็อกไม่ให้ใครอ่านได้เลยแม้จะมีข้อมูลอยู่จริง เพราะยังไม่มี policy อนุญาตให้อ่าน</span>`
+    );
+  } else {
+    clearDiagnostic();
+  }
+  await refreshAllChaptersMeta();
+}
+
+async function refreshAllChaptersMeta() {
+  const { data, error } = await supabase.rpc('get_all_chapters_meta');
+  if (error) {
+    console.error('refreshAllChaptersMeta error:', error);
+    showDiagnostic(
+      `<b>โหลดรายการตอนไม่สำเร็จ</b><br>
+       รหัส: ${error.code || '-'} · ${error.message || 'ไม่ทราบสาเหตุ'}<br>
+       <span class="text-xs">มักเกิดจากยังไม่ได้สร้างฟังก์ชัน get_all_chapters_meta — เช็คว่ารัน setup.sql
+       ครบทั้งไฟล์ (ไม่ใช่แค่ส่วนข้อมูลตัวอย่าง) บนโปรเจกต์นี้แล้วหรือยัง</span>`
+    );
+    return;
+  }
+  const byNovel = {};
+  (data || []).forEach(c => {
+    if (!byNovel[c.novel_id]) byNovel[c.novel_id] = [];
+    byNovel[c.novel_id].push({ id: c.id, number: c.number, title: c.title, isFree: c.is_free, price: Number(c.price) || 0, unlocked: c.unlocked });
+  });
+  novels.forEach(n => { n.chapters = (byNovel[n.id] || []).sort((a, b) => a.number - b.number); });
+}
+
+async function refreshNovelChapters(novelId) {
+  const { data, error } = await supabase.rpc('get_novel_chapters', { p_novel_id: novelId });
+  if (error) { console.error('refreshNovelChapters error:', error); return; }
+  const novel = novels.find(n => n.id === novelId);
+  if (!novel) return;
+  novel.chapters = (data || []).map(c => ({ id: c.id, number: c.number, title: c.title, isFree: c.is_free, price: Number(c.price) || 0, unlocked: c.unlocked }))
+    .sort((a, b) => a.number - b.number);
+}
+
+async function loadCoinPackages() {
+  const { data, error } = await supabase.from('coin_packages').select('*').order('sort_order', { ascending: true });
+  if (error) { console.error('loadCoinPackages error:', error); coinPackages = []; return; }
+  coinPackages = (data || []).map(p => ({ id: p.id, coins: p.coins, price: Number(p.price), bonus: p.bonus || 0, tag: p.tag || '', active: p.active !== false }));
+}
+
+async function loadProfile() {
+  if (!currentUser) { currentProfile = null; isAdmin = false; return; }
+  const { data, error } = await supabase.from('profiles').select('*').eq('id', currentUser.id).single();
+  if (error) { console.error('loadProfile error:', error); currentProfile = null; isAdmin = false; return; }
+  currentProfile = data;
+  isAdmin = data.role === 'admin';
+}
+
+async function loadUserLibrary() {
+  if (!currentUser) { likedNovelIds = new Set(); return; }
+  const { data, error } = await supabase.from('liked_novels').select('novel_id').eq('user_id', currentUser.id);
+  if (error) { console.error('loadUserLibrary error:', error); return; }
+  likedNovelIds = new Set((data || []).map(r => r.novel_id));
+}
+
+function setAuthError(form, msg) {
+  const el = document.getElementById(`${form}-error`);
+  if (!el) return;
+  if (msg) { el.textContent = msg; el.classList.remove('hidden'); } else { el.classList.add('hidden'); }
+}
+
+function translateAuthError(error) {
+  const msg = error?.message || '';
+  if (msg.includes('Invalid login credentials')) return 'อีเมลหรือรหัสผ่านไม่ถูกต้อง';
+  if (msg.includes('User already registered')) return 'อีเมลนี้สมัครสมาชิกไปแล้ว กรุณาเข้าสู่ระบบแทน';
+  if (msg.includes('Password should be at least')) return 'รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร';
+  if (msg.includes('Email not confirmed')) return 'กรุณายืนยันอีเมลก่อนเข้าสู่ระบบ (เช็คกล่องจดหมาย)';
+  return msg || 'เกิดข้อผิดพลาด กรุณาลองใหม่';
+}
+
+function switchAuthTab(tab) {
+  const loginTab = document.getElementById('auth-tab-login');
+  const signupTab = document.getElementById('auth-tab-signup');
+  const loginForm = document.getElementById('login-form');
+  const signupForm = document.getElementById('signup-form');
+  const modalTitle = document.querySelector('#auth-modal h2');
+  if (tab === 'signup') {
+    signupTab.classList.add('bg-white', 'text-emerald-700', 'shadow-sm');
+    loginTab.classList.remove('bg-white', 'text-emerald-700', 'shadow-sm');
+    signupForm.classList.remove('hidden'); loginForm.classList.add('hidden');
+    if (modalTitle) modalTitle.textContent = 'สมัครสมาชิก';
+  } else {
+    loginTab.classList.add('bg-white', 'text-emerald-700', 'shadow-sm');
+    signupTab.classList.remove('bg-white', 'text-emerald-700', 'shadow-sm');
+    loginForm.classList.remove('hidden'); signupForm.classList.add('hidden');
+    if (modalTitle) modalTitle.textContent = 'เข้าสู่ระบบ';
+  }
+}
+
+function openAuthModal(tab = 'login') {
+  document.getElementById('login-form').reset();
+  document.getElementById('signup-form').reset();
+  setAuthError('login', ''); setAuthError('signup', '');
+  switchAuthTab(tab);
+  document.getElementById('auth-modal').classList.remove('hidden');
+}
+
+function switchPolicyTab(tab) {
+  const termsTab = document.getElementById('policy-tab-terms');
+  const refundTab = document.getElementById('policy-tab-refund');
+  const termsContent = document.getElementById('policy-content-terms');
+  const refundContent = document.getElementById('policy-content-refund');
+  const title = document.getElementById('policy-modal-title');
+  if (tab === 'refund') {
+    refundTab.classList.add('bg-white', 'text-emerald-700', 'shadow-sm');
+    termsTab.classList.remove('bg-white', 'text-emerald-700', 'shadow-sm');
+    refundContent.classList.remove('hidden'); termsContent.classList.add('hidden');
+    title.textContent = 'นโยบายการคืนเงิน';
+  } else {
+    termsTab.classList.add('bg-white', 'text-emerald-700', 'shadow-sm');
+    refundTab.classList.remove('bg-white', 'text-emerald-700', 'shadow-sm');
+    termsContent.classList.remove('hidden'); refundContent.classList.add('hidden');
+    title.textContent = 'เงื่อนไขการให้บริการ';
+  }
+}
+
+function openPolicyModal(tab = 'terms') {
+  switchPolicyTab(tab);
+  document.getElementById('policy-modal').classList.remove('hidden');
+}
+
+async function submitLogin(e) {
+  e.preventDefault();
+  setAuthError('login', '');
+  const email = document.getElementById('login-email').value.trim();
+  const password = document.getElementById('login-password').value;
+  const { error } = await supabase.auth.signInWithPassword({ email, password });
+  if (error) { setAuthError('login', translateAuthError(error)); return; }
+  closeModal('auth-modal');
+  showToast('เข้าสู่ระบบสำเร็จ', 'success');
+}
+
+async function submitSignup(e) {
+  e.preventDefault();
+  setAuthError('signup', '');
+  const email = document.getElementById('signup-email').value.trim();
+  const password = document.getElementById('signup-password').value;
+  const displayName = document.getElementById('signup-displayname').value.trim();
+  const { data, error } = await supabase.auth.signUp({
+    email, password,
+    options: { data: displayName ? { display_name: displayName } : {} }
+  });
+  if (error) { setAuthError('signup', translateAuthError(error)); return; }
+  closeModal('auth-modal');
+  if (data.session) {
+    showToast('สมัครสมาชิกสำเร็จ ยินดีต้อนรับ! 🎉', 'success');
+  } else {
+    showToast('สมัครสำเร็จ! กรุณายืนยันอีเมลก่อนเข้าสู่ระบบ (เช็คกล่องจดหมาย)', 'info');
+  }
+}
+
+async function logout() {
+  await supabase.auth.signOut();
+  showToast('ออกจากระบบแล้ว', 'info');
+  if (!document.getElementById('page-admin').classList.contains('hidden')) navigateTo('home');
+}
+
+function updateAuthUI() {
+  const loggedOut = document.getElementById('user-account-loggedout');
+  const loggedIn = document.getElementById('user-account-loggedin');
+  if (currentUser) {
+    loggedOut.classList.add('hidden');
+    loggedIn.classList.remove('hidden');
+    loggedIn.classList.add('flex');
+    const name = currentProfile?.display_name || currentUser.email || 'สมาชิก';
+    document.getElementById('account-display-name').textContent = name;
+    document.getElementById('account-role-label').textContent = isAdmin ? 'แอดมิน' : 'สมาชิก';
+    document.getElementById('account-avatar-initial').textContent = (name.trim().charAt(0) || 'น').toUpperCase();
+  } else {
+    loggedOut.classList.remove('hidden');
+    loggedIn.classList.add('hidden');
+    loggedIn.classList.remove('flex');
+  }
+}
+
+function refreshCurrentPageData() {
+  if (!document.getElementById('page-home').classList.contains('hidden')) renderHome();
+  if (!document.getElementById('page-catalog').classList.contains('hidden')) applyFilters();
+  if (!document.getElementById('page-bookshelf').classList.contains('hidden')) {
+    const likedTabActive = document.getElementById('tab-liked')?.classList.contains('text-emerald-600');
+    renderBookshelf(likedTabActive ? 'liked' : 'purchased');
+  }
+  if (!document.getElementById('page-reader').classList.contains('hidden')) { renderChapterTabs(); renderChapterBody(); }
+}
+
+function initAuthListener() {
+  supabase.auth.onAuthStateChange(async (_event, session) => {
+    currentUser = session?.user || null;
+    if (currentUser) {
+      await loadProfile();
+      await loadUserLibrary();
+      if (pendingAdminRedirect) {
+        pendingAdminRedirect = false;
+        if (isAdmin) navigateTo('admin');
+        else showToast('บัญชีนี้ไม่มีสิทธิ์แอดมิน', 'warning');
+      }
+    } else {
+      currentProfile = null;
+      isAdmin = false;
+      likedNovelIds = new Set();
+    }
+    await refreshAllChaptersMeta();
+    updateAuthUI();
+    updateCoinsDisplay();
+    updateAdminUIState();
+    refreshCurrentPageData();
+  });
+}
+
+document.addEventListener('DOMContentLoaded', async () => {
+  replaceStaticIcons();
+  initAuthListener();
+  updateAuthUI();
+  updateAdminUIState();
+  await Promise.all([loadNovels(), loadCoinPackages()]);
+  updateCoinsDisplay();
+  navigateTo('home');
+  showToast('ยินดีต้อนรับสู่นิยายหลังบ้าน 🌿', 'success');
+});
+
+function navigateTo(pageId) {
+  if (pageId === 'admin' && !(currentUser && isAdmin)) {
+    if (!currentUser) { pendingAdminRedirect = true; openAuthModal('login'); }
+    else showToast('บัญชีนี้ไม่มีสิทธิ์แอดมิน', 'warning');
+    return;
+  }
+  document.querySelectorAll('.page-view').forEach(v => v.classList.add('hidden'));
+  const target = document.getElementById(`page-${pageId}`);
+  if (target) target.classList.remove('hidden');
+
+  document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('text-emerald-700', 'bg-emerald-50', 'font-bold'));
+  const activeNav = document.getElementById(`nav-${pageId}`);
+  if (activeNav) activeNav.classList.add('text-emerald-700', 'bg-emerald-50', 'font-bold');
+
+  if (pageId === 'home') renderHome();
+  if (pageId === 'catalog') { updateGenreFilterDropdown(); applyFilters(); }
+  if (pageId === 'bookshelf') renderBookshelf('purchased');
+  if (pageId === 'admin') { switchAdminTab('stats'); renderAdminNovelsTable(); renderAdminCoinPackages(); }
+
+  document.getElementById('mobile-menu').classList.add('hidden');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function toggleMobileMenu() { document.getElementById('mobile-menu').classList.toggle('hidden'); }
+
+function handleAdminNavClick() {
+  if (currentUser && isAdmin) { navigateTo('admin'); return; }
+  if (currentUser && !isAdmin) { showToast('บัญชีนี้ไม่มีสิทธิ์แอดมิน', 'warning'); return; }
+  pendingAdminRedirect = true;
+  openAuthModal('login');
+}
+
+function updateAdminUIState() {
+  const navAdmin = document.getElementById('nav-admin');
+  const navAdminMobile = document.getElementById('nav-admin-mobile');
+  const iconWrap = document.getElementById('nav-admin-icon-wrap');
+  const iconWrapMobile = document.getElementById('nav-admin-mobile-icon-wrap');
+  const footerLink = document.getElementById('footer-admin-link');
+  const footerLoggedIn = document.getElementById('footer-admin-logged-in');
+
+  const loggedInAsAdmin = !!(currentUser && isAdmin);
+  const iconName = loggedInAsAdmin ? 'chart' : 'lock';
+  if (iconWrap) iconWrap.innerHTML = icon(iconName, 'text-emerald-600');
+  if (iconWrapMobile) iconWrapMobile.innerHTML = icon(iconName, 'text-emerald-600');
+  if (navAdmin) navAdmin.title = loggedInAsAdmin ? 'ไปหน้าแอดมิน' : 'เข้าสู่ระบบแอดมิน';
+  if (navAdminMobile) navAdminMobile.title = navAdmin ? navAdmin.title : '';
+
+  if (footerLink) footerLink.style.display = loggedInAsAdmin ? 'none' : '';
+  if (footerLoggedIn) footerLoggedIn.style.display = loggedInAsAdmin ? '' : 'none';
+}
+
+function getNovelPriceInfo(novel) {
+  if (!novel.chapters || novel.chapters.length === 0) {
+    return { label: 'ยังไม่มีตอน', min: novel.pricePerChapter || 0, max: novel.pricePerChapter || 0, allFree: false };
+  }
+  const paidPrices = novel.chapters.filter(c => !c.isFree).map(c => c.price || 0);
+  if (paidPrices.length === 0) return { label: 'อ่านฟรีทั้งเรื่อง', min: 0, max: 0, allFree: true };
+  const min = Math.min(...paidPrices), max = Math.max(...paidPrices);
+  const label = min === max ? `${min} เหรียญ/ตอน` : `${min}-${max} เหรียญ/ตอน`;
+  return { label, min, max, allFree: false };
+}
+
+function renderHome() {
+  const genres = Array.from(new Set(novels.map(n => n.genre)));
+  document.getElementById('genre-pills').innerHTML = genres.map(g => `
+    <button onclick="goToGenre('${g}')" class="px-4 py-2 bg-white border border-emerald-200 rounded-full text-sm font-semibold text-emerald-700 hover:bg-emerald-50 hover:border-emerald-400 transition-all shadow-sm">${g}</button>
+  `).join('');
+
+  const featured = [...novels].sort((a, b) => b.rating - a.rating).slice(0, 4);
+  document.getElementById('featured-grid').innerHTML = featured.map(createNovelCardHTML).join('');
+  document.getElementById('home-empty').classList.toggle('hidden', novels.length > 0);
+}
+
+function goToGenre(genre) {
+  navigateTo('catalog');
+  setTimeout(() => { document.getElementById('filter-genre').value = genre; applyFilters(); }, 0);
+}
+
+function updateGenreFilterDropdown() {
+  const select = document.getElementById('filter-genre');
+  const current = select.value;
+  const genres = Array.from(new Set(novels.map(n => n.genre)));
+  select.innerHTML = `<option value="ทั้งหมด">ทั้งหมดทุกหมวด</option>` + genres.map(g => `<option value="${g}">${g}</option>`).join('');
+  select.value = genres.includes(current) ? current : 'ทั้งหมด';
+}
+
+function applyFilters() {
+  const genre = document.getElementById('filter-genre').value || 'ทั้งหมด';
+  const sortBy = document.getElementById('filter-sort').value;
+  const search = (document.getElementById('filter-search').value || '').trim().toLowerCase();
+
+  let filtered = novels.filter(n => (genre === 'ทั้งหมด' || n.genre === genre) &&
+    (search === '' || n.title.toLowerCase().includes(search) || n.author.toLowerCase().includes(search)));
+
+  if (sortBy === 'popular') filtered.sort((a, b) => b.rating - a.rating);
+  else if (sortBy === 'price-low') filtered.sort((a, b) => getNovelPriceInfo(a).min - getNovelPriceInfo(b).min);
+  else if (sortBy === 'price-high') filtered.sort((a, b) => getNovelPriceInfo(b).min - getNovelPriceInfo(a).min);
+
+  const grid = document.getElementById('catalog-grid');
+  grid.innerHTML = filtered.map(createNovelCardHTML).join('');
+  document.getElementById('catalog-empty').classList.toggle('hidden', filtered.length > 0);
+}
+
+function resetFilters() {
+  document.getElementById('filter-genre').value = 'ทั้งหมด';
+  document.getElementById('filter-sort').value = 'new';
+  document.getElementById('filter-search').value = '';
+  applyFilters();
+}
+
+function createNovelCardHTML(novel) {
+  const isLiked = likedNovelIds.has(novel.id);
+  const purchasedCount = novel.chapters.filter(c => hasAccess(novel.id, c)).length;
+  const priceLabel = getNovelPriceInfo(novel).label;
+  const hasChapters = novel.chapters.length > 0;
+  const statusBadge = novel.status === 'completed'
+    ? `<span class="px-3 py-1 bg-blue-600 text-white text-[11px] font-bold rounded-full flex items-center gap-1">${icon('checkSquare', '')}จบแล้ว</span>`
+    : `<span class="px-3 py-1 bg-amber-500 text-white text-[11px] font-bold rounded-full flex items-center gap-1">${icon('clock', '')}กำลังลง</span>`;
+
+  return `
+    <div class="bg-white rounded-3xl overflow-hidden border border-emerald-100/80 shadow-sm hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 flex flex-col justify-between group relative">
+      <div class="relative h-60 w-full overflow-hidden bg-slate-100">
+        <img src="${novel.cover}" alt="${novel.title}" onerror="handleCoverImgError(this,'${novel.genre}')" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+        <div class="absolute top-3 left-3 flex flex-col gap-1.5">
+          <span class="px-3 py-1 bg-emerald-900/80 backdrop-blur-md text-white text-[11px] font-bold rounded-full">${novel.genre}</span>
+          ${statusBadge}
+          ${purchasedCount > 0 ? `<span class="px-3 py-1 bg-emerald-500 text-white text-[11px] font-bold rounded-full flex items-center gap-1">${icon('check', '')}อ่านแล้ว ${purchasedCount} ตอน</span>` : ''}
+        </div>
+        <button onclick="toggleLikeNovel('${novel.id}')" class="absolute top-3 right-3 w-10 h-10 rounded-full bg-white/90 backdrop-blur flex items-center justify-center hover:bg-white transition-all shadow-lg">
+          ${icon('heart', `text-lg transition-all ${isLiked ? 'text-rose-500' : 'text-slate-400'}`, isLiked)}
+        </button>
+        <div class="absolute bottom-3 right-3 bg-white/90 backdrop-blur px-2.5 py-1 rounded-full text-[11px] font-bold text-amber-600 flex items-center">${icon('star', 'mr-1', true)}${novel.rating}</div>
+      </div>
+      <div class="p-4 flex-grow flex flex-col">
+        <h3 class="font-bold text-slate-800 line-clamp-2 mb-1">${novel.title}</h3>
+        <p class="text-xs text-slate-500 mb-3">ผู้แต่ง: ${novel.author}</p>
+        <div class="flex flex-wrap gap-1 mb-3">
+          <span class="px-2 py-1 bg-blue-100 text-blue-800 text-[10px] font-bold rounded-full">${novel.chapters.length} ตอน</span>
+          <span class="px-2 py-1 bg-emerald-100 text-emerald-800 text-[10px] font-bold rounded-full">${priceLabel}</span>
+        </div>
+        <p class="text-xs text-slate-600 line-clamp-2 mb-4 flex-grow">${novel.synopsis}</p>
+        ${hasChapters
+          ? `<button onclick="openNovelReader('${novel.id}')" class="w-full px-3 py-2 bg-emerald-600 text-white text-sm font-semibold rounded-xl hover:bg-emerald-700 transition-all flex items-center justify-center gap-1">${icon('book', '')}เริ่มอ่าน</button>`
+          : `<button disabled class="w-full px-3 py-2 bg-slate-200 text-slate-400 text-sm font-semibold rounded-xl cursor-not-allowed">ยังไม่มีตอน</button>`}
+      </div>
+    </div>
+  `;
+}
+
+function hasAccess(_novelId, chapter) {
+  return !!chapter.unlocked;
+}
+
+async function toggleLikeNovel(novelId) {
+  if (!currentUser) { showToast('กรุณาเข้าสู่ระบบก่อนกดถูกใจ', 'warning'); openAuthModal('login'); return; }
+
+  if (likedNovelIds.has(novelId)) {
+    const { error } = await supabase.from('liked_novels').delete().eq('user_id', currentUser.id).eq('novel_id', novelId);
+    if (error) { showToast('เอาออกจากรายการถูกใจไม่สำเร็จ', 'error'); console.error(error); return; }
+    likedNovelIds.delete(novelId);
+    showToast('เอาออกจากรายการถูกใจแล้ว', 'info');
+  } else {
+    const { error } = await supabase.from('liked_novels').insert({ user_id: currentUser.id, novel_id: novelId });
+    if (error) { showToast('เพิ่มรายการถูกใจไม่สำเร็จ', 'error'); console.error(error); return; }
+    likedNovelIds.add(novelId);
+    showToast('เพิ่มในรายการถูกใจแล้ว ❤️', 'success');
+  }
+  updateLikedBadge();
+
+  const catalogVisible = !document.getElementById('page-catalog').classList.contains('hidden');
+  const homeVisible = !document.getElementById('page-home').classList.contains('hidden');
+  const shelfVisible = !document.getElementById('page-bookshelf').classList.contains('hidden');
+  if (catalogVisible) applyFilters();
+  if (homeVisible) renderHome();
+  if (shelfVisible) renderBookshelf(document.getElementById('tab-liked').classList.contains('text-emerald-600') ? 'liked' : 'purchased');
+}
+
+function updateLikedBadge() {
+  const badge = document.getElementById('liked-count-badge');
+  const count = likedNovelIds.size;
+  badge.textContent = count;
+  badge.classList.toggle('hidden', count === 0);
+}
+
+function renderBookshelf(tab) {
+  const grid = document.getElementById('bookshelf-grid');
+  const emptyEl = document.getElementById('bookshelf-empty');
+  const tabsWrap = document.getElementById('bookshelf-tabs');
+
+  if (!currentUser) {
+    if (tabsWrap) tabsWrap.classList.add('hidden');
+    grid.innerHTML = '';
+    emptyEl.innerHTML = `${icon('lock', 'text-3xl mb-2 block mx-auto w-fit')}กรุณาเข้าสู่ระบบเพื่อดูชั้นหนังสือของคุณ<br><button onclick="openAuthModal('login')" class="mt-4 px-6 py-2 bg-emerald-600 text-white rounded-xl font-semibold hover:bg-emerald-700">เข้าสู่ระบบ</button>`;
+    emptyEl.classList.remove('hidden');
+    document.getElementById('count-purchased').textContent = '0';
+    document.getElementById('count-liked').textContent = '0';
+    return;
+  }
+  if (tabsWrap) tabsWrap.classList.remove('hidden');
+
+  const purchasedNovels = novels.filter(n => n.chapters.some(c => hasAccess(n.id, c) && !c.isFree));
+  const likedNovels = novels.filter(n => likedNovelIds.has(n.id));
+
+  document.getElementById('count-purchased').textContent = purchasedNovels.length;
+  document.getElementById('count-liked').textContent = likedNovels.length;
+
+  const tabPurchased = document.getElementById('tab-purchased');
+  const tabLiked = document.getElementById('tab-liked');
+  [tabPurchased, tabLiked].forEach(t => { t.classList.remove('text-emerald-600', 'border-emerald-600'); t.classList.add('text-slate-600', 'border-transparent'); });
+
+  let items;
+  if (tab === 'liked') {
+    tabLiked.classList.add('text-emerald-600', 'border-emerald-600');
+    tabLiked.classList.remove('text-slate-600', 'border-transparent');
+    items = likedNovels;
+  } else {
+    tabPurchased.classList.add('text-emerald-600', 'border-emerald-600');
+    tabPurchased.classList.remove('text-slate-600', 'border-transparent');
+    items = purchasedNovels;
+  }
+
+  document.getElementById('bookshelf-grid').innerHTML = items.map(createNovelCardHTML).join('');
+  document.getElementById('bookshelf-empty').classList.toggle('hidden', items.length > 0);
+}
+
+function openNovelReader(novelId) {
+  const novel = novels.find(n => n.id === novelId);
+  if (!novel) return;
+
+  if (!novel.chapters || novel.chapters.length === 0) {
+    showToast('นิยายเรื่องนี้ยังไม่มีตอนให้อ่าน', 'warning');
+    return;
+  }
+
+  currentReaderNovelId = novelId;
+  currentChapterIndex = 0;
+
+  novel.viewCount = (novel.viewCount || 0) + 1;
+  supabase.rpc('increment_view_count', { p_novel_id: novelId }).then(({ error }) => { if (error) console.warn('increment_view_count:', error); });
+
+  document.getElementById('reader-title').textContent = novel.title;
+  document.getElementById('reader-author').textContent = `ผู้แต่ง: ${novel.author} · ${novel.genre}`;
+
+  renderChapterTabs();
+  renderChapterBody();
+  navigateTo('reader');
+}
+
+function renderChapterTabs() {
+  const novel = novels.find(n => n.id === currentReaderNovelId);
+  if (!novel) return;
+  const tabs = document.getElementById('chapter-tabs');
+  tabs.innerHTML = novel.chapters.map((c, i) => {
+    const unlocked = hasAccess(novel.id, c);
+    const active = i === currentChapterIndex;
+    return `<button onclick="goToChapter(${i})" class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1 ${active ? 'bg-emerald-600 text-white' : unlocked ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100' : 'bg-slate-100 text-slate-400 hover:bg-slate-200'}">
+      ${unlocked ? '' : icon('lock', '')}<span>${c.number}</span>
+    </button>`;
+  }).join('');
+}
+
+function goToChapter(index) { currentChapterIndex = index; renderChapterTabs(); renderChapterBody(); }
+
+async function renderChapterBody() {
+  const novel = novels.find(n => n.id === currentReaderNovelId);
+  if (!novel) return;
+  const chapter = novel.chapters[currentChapterIndex];
+  if (!chapter) return;
+
+  document.getElementById('chapter-title').textContent = chapter.title;
+  document.getElementById('chapter-counter').textContent = `ตอนที่ ${currentChapterIndex + 1} / ${novel.chapters.length}`;
+
+  const contentEl = document.getElementById('chapter-content');
+  const lockedEl = document.getElementById('chapter-locked');
+
+  if (hasAccess(novel.id, chapter)) {
+    lockedEl.classList.add('hidden');
+    contentEl.classList.remove('hidden');
+    contentEl.style.fontSize = readerFontSize + 'px';
+    contentEl.innerHTML = `<div class="spinner mx-auto my-8"></div>`;
+    const { data, error } = await supabase.rpc('get_chapter_content', { p_chapter_id: chapter.id });
+    const stillSameChapter = novels.find(n => n.id === currentReaderNovelId)?.chapters[currentChapterIndex]?.id === chapter.id;
+    if (!stillSameChapter) return;
+    if (error) {
+      contentEl.innerHTML = `<p class="text-rose-500 text-sm text-center py-8">โหลดเนื้อหาไม่สำเร็จ: ${error.message || 'กรุณาลองใหม่'}</p>`;
+      console.error('get_chapter_content error:', error);
+    } else {
+      contentEl.innerHTML = data || '';
+    }
+  } else {
+    contentEl.classList.add('hidden');
+    lockedEl.classList.remove('hidden');
+    document.getElementById('chapter-lock-price').textContent = currentUser
+      ? `ราคา ${chapter.price || 0} เหรียญ (คุณมี ${currentProfile?.coins ?? 0} เหรียญ)`
+      : `ราคา ${chapter.price || 0} เหรียญ — กรุณาเข้าสู่ระบบก่อนปลดล็อก`;
+  }
+
+  document.getElementById('btn-prev-chapter').disabled = currentChapterIndex === 0;
+  document.getElementById('btn-next-chapter').disabled = currentChapterIndex === novel.chapters.length - 1;
+}
+
+function navigateChapter(direction) {
+  const novel = novels.find(n => n.id === currentReaderNovelId);
+  if (!novel) return;
+  const next = currentChapterIndex + direction;
+  if (next < 0 || next >= novel.chapters.length) return;
+  currentChapterIndex = next;
+  renderChapterTabs();
+  renderChapterBody();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function adjustFontSize(delta) {
+  readerFontSize = Math.max(12, Math.min(28, readerFontSize + delta * 2));
+  const el = document.getElementById('chapter-content');
+  if (el) el.style.fontSize = readerFontSize + 'px';
+}
+
+async function purchaseChapter() {
+  if (!currentUser) { showToast('กรุณาเข้าสู่ระบบก่อนปลดล็อกตอน', 'warning'); openAuthModal('login'); return; }
+  const novel = novels.find(n => n.id === currentReaderNovelId);
+  const chapter = novel.chapters[currentChapterIndex];
+
+  const { data, error } = await supabase.rpc('purchase_chapter', { p_chapter_id: chapter.id });
+  if (error) {
+    const msg = error.message || 'ซื้อตอนไม่สำเร็จ';
+    showToast(msg, 'error');
+    if (msg.includes('เหรียญไม่พอ')) openTopUpModal();
+    return;
+  }
+
+  await loadProfile();
+  updateCoinsDisplay();
+  await refreshNovelChapters(novel.id);
+  renderChapterTabs();
+  renderChapterBody();
+  showToast(`ปลดล็อก "${chapter.title}" สำเร็จ!`, 'success');
+}
+
+function switchAdminTab(tab) {
+  ['stats', 'novels', 'packages'].forEach(t => {
+    const btn = document.getElementById(`admin-tab-${t}`);
+    const content = document.getElementById(`admin-${t}-content`);
+    if (t === tab) { btn.classList.add('text-emerald-600', 'border-emerald-600'); btn.classList.remove('text-slate-600', 'border-transparent'); content.classList.remove('hidden'); }
+    else { btn.classList.remove('text-emerald-600', 'border-emerald-600'); btn.classList.add('text-slate-600', 'border-transparent'); content.classList.add('hidden'); }
+  });
+  if (tab === 'stats') initSalesStats();
+}
+
+function renderAdminNovelsTable() {
+  const tbody = document.getElementById('admin-novels-table');
+  tbody.innerHTML = novels.map(n => `
+    <tr class="hover:bg-slate-50 transition-colors border-b border-slate-100">
+      <td class="p-3"><img src="${n.cover}" alt="${n.title}" onerror="handleCoverImgError(this,'${n.genre}')" class="w-12 h-16 object-cover rounded-lg shadow-sm" /></td>
+      <td class="p-3"><span class="block font-bold text-slate-800">${n.title}</span><span class="text-xs text-slate-400">ผู้แต่ง: ${n.author}</span></td>
+      <td class="p-3"><span class="px-2.5 py-0.5 bg-emerald-100 text-emerald-800 text-xs font-bold rounded-full">${n.genre}</span></td>
+      <td class="p-3"><span class="px-2.5 py-0.5 ${n.status === 'completed' ? 'bg-blue-100 text-blue-800' : 'bg-amber-100 text-amber-800'} text-xs font-bold rounded-full">${n.status === 'completed' ? 'จบแล้ว' : 'ยังไม่จบ'}</span></td>
+      <td class="p-3 text-slate-600 font-medium">${getNovelPriceInfo(n).label}</td>
+      <td class="p-3 text-slate-600 font-bold">${n.chapters.length} ตอน</td>
+      <td class="p-3 text-center space-x-1 whitespace-nowrap">
+        <button onclick="openChapterManager('${n.id}')" class="p-2 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg text-xs font-bold transition-all" title="จัดการตอน">${icon('list', '')}</button>
+        <button onclick="editNovel('${n.id}')" class="p-2 bg-amber-50 hover:bg-amber-100 text-amber-700 rounded-lg text-xs font-bold transition-all" title="แก้ไขข้อมูล">${icon('edit', '')}</button>
+        <button onclick="deleteNovel('${n.id}')" class="p-2 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg text-xs font-bold transition-all" title="ลบนิยาย">${icon('trash', '')}</button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function openNovelModal(novelId = null) {
+  const modal = document.getElementById('novel-modal');
+  const title = document.getElementById('modal-title');
+  document.getElementById('novel-form').reset();
+  pendingCoverDataUri = null;
+  document.getElementById('form-cover-file').value = '';
+  document.getElementById('clear-cover-upload-btn').classList.add('hidden');
+
+  if (novelId) {
+    const novel = novels.find(n => n.id === novelId);
+    title.textContent = 'แก้ไขข้อมูลนิยาย';
+    document.getElementById('form-novel-id').value = novelId;
+    document.getElementById('form-title').value = novel.title;
+    document.getElementById('form-author').value = novel.author;
+    document.getElementById('form-genre').value = novel.genre;
+    document.getElementById('form-price-per-chapter').value = novel.pricePerChapter;
+    document.getElementById('form-cover').value = novel.cover.startsWith('data:') ? '' : novel.cover;
+    document.getElementById('form-status').value = novel.status || 'ongoing';
+    document.getElementById('form-synopsis').value = novel.synopsis;
+    const preview = document.getElementById('cover-preview');
+    preview.onerror = () => { preview.src = createPlaceholderCoverDataUri(novel.genre); };
+    preview.src = novel.cover;
+    preview.classList.remove('hidden');
+  } else {
+    title.textContent = 'เพิ่มนิยายเรื่องใหม่';
+    document.getElementById('form-novel-id').value = '';
+    document.getElementById('form-status').value = 'ongoing';
+    document.getElementById('cover-preview').classList.add('hidden');
+  }
+  modal.classList.remove('hidden');
+}
+
+function editNovel(novelId) { openNovelModal(novelId); }
+
+function updateCoverPreviewFromUrl() {
+  if (pendingCoverDataUri) return;
+  const url = document.getElementById('form-cover').value.trim();
+  const preview = document.getElementById('cover-preview');
+  if (url) {
+    preview.onerror = () => { preview.classList.add('hidden'); };
+    preview.src = url;
+    preview.classList.remove('hidden');
+  } else {
+    preview.classList.add('hidden');
+  }
+}
+
+function handleCoverFileSelect(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  if (!file.type.startsWith('image/')) { showToast('กรุณาเลือกไฟล์รูปภาพเท่านั้น', 'warning'); e.target.value = ''; return; }
+  if (file.size > 3 * 1024 * 1024) { showToast('ไฟล์รูปใหญ่เกินไป (จำกัด 3MB)', 'warning'); e.target.value = ''; return; }
+  const reader = new FileReader();
+  reader.onload = (evt) => {
+    pendingCoverDataUri = evt.target.result;
+    const preview = document.getElementById('cover-preview');
+    preview.onerror = null;
+    preview.src = pendingCoverDataUri;
+    preview.classList.remove('hidden');
+    document.getElementById('clear-cover-upload-btn').classList.remove('hidden');
+    showToast('อัปโหลดรูปปกสำเร็จ (ยังไม่บันทึกจนกว่าจะกด "บันทึก")', 'success');
+  };
+  reader.readAsDataURL(file);
+}
+
+function clearCoverUpload() {
+  pendingCoverDataUri = null;
+  document.getElementById('form-cover-file').value = '';
+  document.getElementById('clear-cover-upload-btn').classList.add('hidden');
+  updateCoverPreviewFromUrl();
+}
+
+async function saveNovelForm(e) {
+  e.preventDefault();
+  const id = document.getElementById('form-novel-id').value;
+  const title = document.getElementById('form-title').value.trim();
+  const author = document.getElementById('form-author').value.trim();
+  const genre = document.getElementById('form-genre').value;
+  const pricePerChapter = parseFloat(document.getElementById('form-price-per-chapter').value) || 0;
+  const typedCoverUrl = document.getElementById('form-cover').value.trim();
+  const status = document.getElementById('form-status').value;
+  const synopsis = document.getElementById('form-synopsis').value.trim();
+
+  let cover = pendingCoverDataUri || typedCoverUrl;
+  if (!cover) {
+    const existing = id ? novels.find(n => n.id === id) : null;
+    cover = existing ? existing.cover : createPlaceholderCoverDataUri(genre);
+  }
+
+  const payload = { title, author, genre, price_per_chapter: pricePerChapter, cover_url: cover, status, synopsis };
+
+  if (id) {
+    const { error } = await supabase.from('novels').update({ ...payload, updated_at: new Date().toISOString() }).eq('id', id);
+    if (error) { showToast('อัปเดตนิยายไม่สำเร็จ: ' + error.message, 'error'); return; }
+    showToast('อัปเดตนิยายเรียบร้อยแล้ว', 'success');
+  } else {
+    const { error } = await supabase.from('novels').insert({ ...payload, rating: 4.5, view_count: 0 });
+    if (error) { showToast('เพิ่มนิยายไม่สำเร็จ: ' + error.message, 'error'); return; }
+    showToast('เพิ่มนิยายเรียบร้อยแล้ว — กด "จัดการตอน" เพื่อเพิ่มตอนแรก', 'success');
+  }
+
+  pendingCoverDataUri = null;
+  await loadNovels();
+  renderAdminNovelsTable();
+  closeModal('novel-modal');
+}
+
+async function deleteNovel(novelId) {
+  if (!confirm('คุณแน่ใจหรือว่าต้องการลบนิยายนี้?')) return;
+  const { error } = await supabase.from('novels').delete().eq('id', novelId);
+  if (error) { showToast('ลบนิยายไม่สำเร็จ: ' + error.message, 'error'); return; }
+  await loadNovels();
+  renderAdminNovelsTable();
+  showToast('ลบนิยายเรียบร้อยแล้ว', 'success');
+}
+
+async function openChapterManager(novelId) {
+  const novel = novels.find(n => n.id === novelId);
+  if (!novel) return;
+  chapterManagerNovelId = novelId;
+  document.getElementById('chapter-modal-novel-title').textContent = novel.title;
+  cancelChapterEdit();
+  await loadAdminChaptersForNovel(novelId);
+  renderChapterManagerList();
+  document.getElementById('chapter-modal').classList.remove('hidden');
+}
+
+async function loadAdminChaptersForNovel(novelId) {
+  const { data, error } = await supabase.from('chapters').select('*').eq('novel_id', novelId).order('number');
+  if (error) { showToast('โหลดตอนไม่สำเร็จ: ' + error.message, 'error'); adminChaptersCache = []; return; }
+  adminChaptersCache = data || [];
+}
+
+function renderChapterManagerList() {
+  const list = document.getElementById('chapter-manager-list');
+  if (adminChaptersCache.length === 0) {
+    list.innerHTML = `<p class="text-center text-slate-400 text-sm py-6">ยังไม่มีตอน — เพิ่มตอนแรกได้จากฟอร์มด้านล่าง</p>`;
+    return;
+  }
+
+  list.innerHTML = adminChaptersCache.map(c => `
+    <div class="flex items-center justify-between gap-2 p-3 bg-slate-50 rounded-xl border border-slate-100">
+      <div class="min-w-0">
+        <p class="font-semibold text-slate-800 text-sm truncate">ตอนที่ ${c.number}: ${c.title}</p>
+        <span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${c.is_free ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}">${c.is_free ? 'อ่านฟรี' : ((c.price || 0) + ' เหรียญ')}</span>
+      </div>
+      <div class="flex gap-1 flex-shrink-0">
+        <button onclick="editChapterInModal('${c.id}')" class="p-2 bg-amber-50 hover:bg-amber-100 text-amber-700 rounded-lg text-xs" title="แก้ไขตอนนี้">${icon('edit', '')}</button>
+        <button onclick="deleteChapterInModal('${c.id}')" class="p-2 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg text-xs" title="ลบตอนนี้">${icon('trash', '')}</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function editChapterInModal(chapterId) {
+  const chapter = adminChaptersCache.find(c => c.id === chapterId);
+  if (!chapter) return;
+  document.getElementById('chapter-form-heading').textContent = `แก้ไขตอนที่ ${chapter.number}`;
+  document.getElementById('chapter-form-chapter-number').value = chapter.id;
+  document.getElementById('chapter-form-title').value = chapter.title;
+  document.getElementById('chapter-form-content').value = chapter.content;
+  document.getElementById('chapter-form-free').checked = !!chapter.is_free;
+  document.getElementById('chapter-form-price').value = chapter.price || 0;
+  toggleChapterPriceField();
+  document.getElementById('chapter-form-submit-btn').textContent = 'บันทึกการแก้ไข';
+  document.getElementById('chapter-form-cancel-btn').classList.remove('hidden');
+}
+
+function cancelChapterEdit() {
+  const form = document.getElementById('chapter-form');
+  if (form) form.reset();
+  document.getElementById('chapter-form-chapter-number').value = '';
+  document.getElementById('chapter-form-heading').textContent = 'เพิ่มตอนใหม่';
+  document.getElementById('chapter-form-submit-btn').textContent = 'เพิ่มตอนใหม่';
+  document.getElementById('chapter-form-cancel-btn').classList.add('hidden');
+  const novel = novels.find(n => n.id === chapterManagerNovelId);
+  document.getElementById('chapter-form-price').value = novel ? (novel.pricePerChapter || 0) : 0;
+  toggleChapterPriceField();
+}
+
+function toggleChapterPriceField() {
+  const free = document.getElementById('chapter-form-free').checked;
+  const priceInput = document.getElementById('chapter-form-price');
+  priceInput.disabled = free;
+  if (free) priceInput.value = '';
+}
+
+function insertImageAtCursor(html) {
+  const ta = document.getElementById('chapter-form-content');
+  const start = ta.selectionStart ?? ta.value.length;
+  const end = ta.selectionEnd ?? ta.value.length;
+  const before = ta.value.substring(0, start);
+  const after = ta.value.substring(end);
+  ta.value = before + html + after;
+  const pos = start + html.length;
+  ta.focus();
+  ta.setSelectionRange(pos, pos);
+}
+
+function insertChapterImageFromUrl() {
+  const url = prompt('วางลิงก์ URL ของรูปภาพที่ต้องการแทรก:');
+  if (!url || !url.trim()) return;
+  insertImageAtCursor(`<img src="${url.trim()}" alt="ภาพประกอบ" style="max-width:100%;border-radius:12px;margin:8px 0;">`);
+}
+
+function handleChapterImageFileSelect(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  if (!file.type.startsWith('image/')) { showToast('กรุณาเลือกไฟล์รูปภาพเท่านั้น', 'warning'); e.target.value = ''; return; }
+  if (file.size > 3 * 1024 * 1024) { showToast('ไฟล์รูปใหญ่เกินไป (จำกัด 3MB)', 'warning'); e.target.value = ''; return; }
+  const reader = new FileReader();
+  reader.onload = (evt) => {
+    insertImageAtCursor(`<img src="${evt.target.result}" alt="ภาพประกอบ" style="max-width:100%;border-radius:12px;margin:8px 0;">`);
+    showToast('แทรกรูปภาพในเนื้อหาแล้ว', 'success');
+  };
+  reader.readAsDataURL(file);
+  e.target.value = '';
+}
+
+async function saveChapterForm(e) {
+  e.preventDefault();
+  const novel = novels.find(n => n.id === chapterManagerNovelId);
+  if (!novel) return;
+
+  const chapterId = document.getElementById('chapter-form-chapter-number').value;
+  const title = document.getElementById('chapter-form-title').value.trim();
+  const content = document.getElementById('chapter-form-content').value.trim();
+  const isFree = document.getElementById('chapter-form-free').checked;
+  const price = isFree ? 0 : (parseFloat(document.getElementById('chapter-form-price').value) || 0);
+
+  if (chapterId) {
+    const { error } = await supabase.from('chapters').update({ title, content, is_free: isFree, price }).eq('id', chapterId);
+    if (error) { showToast('บันทึกไม่สำเร็จ: ' + error.message, 'error'); return; }
+    showToast('บันทึกการแก้ไขตอนเรียบร้อยแล้ว', 'success');
+  } else {
+    const nextNumber = adminChaptersCache.length > 0 ? Math.max(...adminChaptersCache.map(c => c.number)) + 1 : 1;
+    const { error } = await supabase.from('chapters').insert({ novel_id: novel.id, number: nextNumber, title, content, is_free: isFree, price });
+    if (error) { showToast('เพิ่มตอนไม่สำเร็จ: ' + error.message, 'error'); return; }
+    showToast(`เพิ่มตอนที่ ${nextNumber} เรียบร้อยแล้ว — เพิ่มตอนถัดไปได้เลย`, 'success');
+  }
+
+  cancelChapterEdit();
+  await loadAdminChaptersForNovel(chapterManagerNovelId);
+  renderChapterManagerList();
+  await refreshNovelChapters(chapterManagerNovelId);
+  renderAdminNovelsTable();
+}
+
+async function deleteChapterInModal(chapterId) {
+  if (!confirm('ต้องการลบตอนนี้หรือไม่?')) return;
+  const { error } = await supabase.from('chapters').delete().eq('id', chapterId);
+  if (error) { showToast('ลบตอนไม่สำเร็จ: ' + error.message, 'error'); return; }
+  await loadAdminChaptersForNovel(chapterManagerNovelId);
+  renderChapterManagerList();
+  await refreshNovelChapters(chapterManagerNovelId);
+  renderAdminNovelsTable();
+  showToast('ลบตอนเรียบร้อยแล้ว', 'success');
+}
+
+function renderAdminCoinPackages() {
+  document.getElementById('coin-packages-list').innerHTML = coinPackages.map(pkg => `
+    <div class="bg-gradient-to-br from-emerald-50 to-emerald-100 p-6 rounded-2xl border border-emerald-300 hover:shadow-lg transition-all">
+      <div class="flex justify-between items-start mb-3">
+        <div><h3 class="text-lg font-bold text-emerald-900">${pkg.coins.toLocaleString()} เหรียญ</h3><p class="text-sm text-emerald-700 font-semibold">฿${pkg.price}</p></div>
+        <button onclick="deleteCoinPackage('${pkg.id}')" class="text-rose-600 hover:text-rose-700">${icon('trash', '')}</button>
+      </div>
+      ${pkg.tag ? `<span class="inline-block px-2 py-1 bg-white/70 text-emerald-800 text-[10px] font-bold rounded-full mb-2">${pkg.tag}</span>` : ''}
+      ${pkg.bonus ? `<p class="text-xs text-rose-600 font-semibold mb-3">+ ${pkg.bonus} เหรียญโบนัส</p>` : '<div class="mb-3"></div>'}
+      <button onclick="openCoinPackageModal('${pkg.id}')" class="w-full px-3 py-2 bg-emerald-600 text-white rounded-lg font-medium text-sm hover:bg-emerald-700">แก้ไข</button>
+    </div>
+  `).join('');
+}
+
+function openCoinPackageModal(packageId = null) {
+  document.getElementById('coin-package-form').reset();
+  const titleEl = document.getElementById('package-modal-title');
+  if (packageId) {
+    const pkg = coinPackages.find(p => p.id === packageId);
+    titleEl.textContent = 'แก้ไขชุดเหรียญ';
+    document.getElementById('form-package-id').value = packageId;
+    document.getElementById('form-coin-amount').value = pkg.coins;
+    document.getElementById('form-package-price').value = pkg.price;
+    document.getElementById('form-bonus-coins').value = pkg.bonus || 0;
+    document.getElementById('form-package-tag').value = pkg.tag || '';
+  } else {
+    titleEl.textContent = 'เพิ่มชุดเหรียญ';
+    document.getElementById('form-package-id').value = '';
+  }
+  document.getElementById('coin-package-modal').classList.remove('hidden');
+}
+
+async function saveCoinPackage(e) {
+  e.preventDefault();
+  const id = document.getElementById('form-package-id').value;
+  const coins = parseInt(document.getElementById('form-coin-amount').value);
+  const price = parseFloat(document.getElementById('form-package-price').value);
+  const bonus = parseInt(document.getElementById('form-bonus-coins').value) || 0;
+  const tag = document.getElementById('form-package-tag').value.trim();
+
+  if (id) {
+    const { error } = await supabase.from('coin_packages').update({ coins, price, bonus, tag }).eq('id', id);
+    if (error) { showToast('อัปเดตไม่สำเร็จ: ' + error.message, 'error'); return; }
+    showToast('อัปเดตชุดเหรียญเรียบร้อยแล้ว', 'success');
+  } else {
+    const { error } = await supabase.from('coin_packages').insert({ coins, price, bonus, tag, sort_order: coinPackages.length });
+    if (error) { showToast('เพิ่มไม่สำเร็จ: ' + error.message, 'error'); return; }
+    showToast('เพิ่มชุดเหรียญเรียบร้อยแล้ว', 'success');
+  }
+  await loadCoinPackages();
+  renderAdminCoinPackages();
+  closeModal('coin-package-modal');
+}
+
+async function deleteCoinPackage(packageId) {
+  if (!confirm('คุณแน่ใจหรือว่าต้องการลบชุดเหรียญนี้?')) return;
+  const { error } = await supabase.from('coin_packages').delete().eq('id', packageId);
+  if (error) { showToast('ลบไม่สำเร็จ: ' + error.message, 'error'); return; }
+  await loadCoinPackages();
+  renderAdminCoinPackages();
+  showToast('ลบชุดเหรียญเรียบร้อยแล้ว', 'success');
+}
+
+async function initSalesStats() {
+  const { data, error } = await supabase.from('orders').select('*').order('created_at', { ascending: false });
+  if (error) { console.error('initSalesStats error:', error); showToast('โหลดข้อมูลยอดขายไม่สำเร็จ', 'error'); salesOrdersCache = []; }
+  else salesOrdersCache = data || [];
+
+  try { updateSalesChart(); } catch (err) { console.error('Sales chart error:', err); }
+  try { updateSalesTable(); } catch (err) { console.error('Sales table error:', err); }
+  try { updateSalesMetrics(); } catch (err) { console.error('Sales metrics error:', err); }
+}
+
+function updateSalesChart() {
+  if (typeof Chart === 'undefined') {
+    console.warn('Chart.js not loaded — skipping sales chart render.');
+    return;
+  }
+  const ctx = document.getElementById('sales-chart').getContext('2d');
+  if (salesChartInstance) salesChartInstance.destroy();
+
+  const paidOrders = salesOrdersCache.filter(o => o.status === 'paid');
+  const days = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(); d.setDate(d.getDate() - (6 - i)); return d;
+  });
+  const labels = days.map(d => d.toLocaleDateString('th-TH', { month: 'short', day: 'numeric' }));
+  const data = days.map(d => paidOrders.filter(o => sameDay(new Date(o.paid_at || o.created_at), d)).reduce((sum, o) => sum + Number(o.amount), 0));
+
+  salesChartInstance = new Chart(ctx, {
+    type: 'line',
+    data: { labels, datasets: [{ label: 'รายรับ (บาท)', data, borderColor: '#10b981', backgroundColor: 'rgba(16,185,129,0.12)', tension: 0.4, fill: true }] },
+    options: { responsive: true, plugins: { legend: { display: true } } }
+  });
+}
+
+function sameDay(a, b) { return a.toDateString() === b.toDateString(); }
+
+const ORDER_STATUS_LABEL = { paid: 'สำเร็จ', pending: 'รอชำระเงิน', failed: 'ล้มเหลว', expired: 'หมดอายุ' };
+const ORDER_STATUS_CLASS = {
+  paid: 'bg-emerald-100 text-emerald-800', pending: 'bg-amber-100 text-amber-800',
+  failed: 'bg-rose-100 text-rose-800', expired: 'bg-slate-200 text-slate-600'
+};
+
+function updateSalesTable() {
+  const tbody = document.getElementById('sales-table-body');
+  const sorted = [...salesOrdersCache].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+  tbody.innerHTML = sorted.slice(0, 15).map(o => `
+    <tr class="hover:bg-slate-50 transition-colors border-b border-slate-100">
+      <td class="p-3 font-mono text-xs">${(o.id || '').slice(0, 8)}</td>
+      <td class="p-3 text-xs">${new Date(o.created_at).toLocaleString('th-TH')}</td>
+      <td class="p-3 text-xs">เติม ${(o.coins + (o.bonus || 0)).toLocaleString()} เหรียญ (PromptPay QR)</td>
+      <td class="p-3 font-bold text-emerald-700 text-sm">฿${Number(o.amount).toLocaleString('th-TH', { minimumFractionDigits: 2 })}</td>
+      <td class="p-3"><span class="px-3 py-1 ${ORDER_STATUS_CLASS[o.status] || 'bg-slate-100 text-slate-600'} text-[11px] font-bold rounded-full">${ORDER_STATUS_LABEL[o.status] || o.status}</span></td>
+    </tr>
+  `).join('') || `<tr><td colspan="5" class="p-6 text-center text-slate-400">ยังไม่มีรายการขาย</td></tr>`;
+}
+
+function updateSalesMetrics() {
+  const today = new Date();
+  const paidOrders = salesOrdersCache.filter(o => o.status === 'paid');
+  const todayRevenue = paidOrders.filter(o => sameDay(new Date(o.paid_at || o.created_at), today)).reduce((s, o) => s + Number(o.amount), 0);
+  const totalRevenue = paidOrders.reduce((s, o) => s + Number(o.amount), 0);
+
+  document.getElementById('stat-today-revenue').textContent = `฿${todayRevenue.toLocaleString('th-TH', { minimumFractionDigits: 2 })}`;
+  document.getElementById('stat-total-revenue').textContent = `฿${totalRevenue.toLocaleString('th-TH', { minimumFractionDigits: 2 })}`;
+  document.getElementById('stat-total-customers').textContent = paidOrders.length;
+}
+
+function exportSalesTableCSV() {
+  let csv = 'ออเดอร์,วันที่,รายการ,ราคา,สถานะ\n';
+  salesOrdersCache.forEach(o => {
+    csv += `${o.id},"${new Date(o.created_at).toLocaleString('th-TH')}","เติม ${o.coins + (o.bonus || 0)} เหรียญ","${o.amount}",${ORDER_STATUS_LABEL[o.status] || o.status}\n`;
+  });
+  const blob = new Blob(["\uFEFF" + csv], { type: 'text/csv;charset=utf-8;' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = `sales_${new Date().toISOString().split('T')[0]}.csv`;
+  link.click();
+  showToast('ดาวน์โหลด CSV เรียบร้อยแล้ว', 'success');
+}
+
+function openTopUpModal() {
+  if (!currentUser) { showToast('กรุณาเข้าสู่ระบบก่อนเติมเหรียญ', 'warning'); openAuthModal('login'); return; }
+  document.getElementById('coin-packages-modal').innerHTML = coinPackages.filter(p => p.active !== false).map(pkg => `
+    <button onclick="selectCoinPackage('${pkg.id}')" class="w-full p-4 text-left bg-gradient-to-r from-emerald-50 to-emerald-100 border-2 border-emerald-300 rounded-2xl hover:border-emerald-500 hover:shadow-lg transition-all">
+      <div class="flex justify-between items-center">
+        <div><p class="font-bold text-emerald-900">${pkg.coins.toLocaleString()} เหรียญ</p><p class="text-emerald-700 font-semibold">฿${pkg.price}</p>${pkg.tag ? `<span class="text-[10px] text-emerald-600 font-semibold">${pkg.tag}</span>` : ''}</div>
+        ${pkg.bonus ? `<span class="px-3 py-1 bg-rose-500 text-white text-xs font-bold rounded-full">+${pkg.bonus} โบนัส</span>` : ''}
+      </div>
+    </button>
+  `).join('');
+  document.getElementById('topup-modal').classList.remove('hidden');
+}
+
+async function selectCoinPackage(packageId) {
+  selectedCoinPackage = coinPackages.find(p => p.id === packageId);
+  closeModal('topup-modal');
+  document.getElementById('payment-pkg-label').textContent = `${selectedCoinPackage.coins.toLocaleString()} เหรียญ${selectedCoinPackage.bonus ? ' + ' + selectedCoinPackage.bonus + ' โบนัส' : ''}`;
+  document.getElementById('payment-total').textContent = `฿${selectedCoinPackage.price.toLocaleString('th-TH', { minimumFractionDigits: 2 })}`;
+  document.getElementById('payment-qr-area').classList.add('hidden');
+  document.getElementById('payment-qr-unavailable').classList.add('hidden');
+  document.getElementById('payment-modal').classList.remove('hidden');
+  await startPromptPayQR();
+}
+
+async function callEdgeFunction(name, body) {
+  const { data: sessionData } = await supabase.auth.getSession();
+  const accessToken = sessionData?.session?.access_token;
+  const res = await fetch(`${SUPABASE_URL}/functions/v1/${name}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${accessToken}`,
+      'apikey': SUPABASE_ANON_KEY
+    },
+    body: JSON.stringify(body)
+  });
+  const result = await res.json().catch(() => ({}));
+  return { ok: res.ok, result };
+}
+
+async function startPromptPayQR() {
+  document.getElementById('payment-qr-unavailable').classList.add('hidden');
+  document.getElementById('payment-qr-area').classList.add('hidden');
+  document.getElementById('payment-qr-loading').classList.remove('hidden');
+
+  try {
+    const { ok, result } = await callEdgeFunction('create-beam-charge', { package_id: selectedCoinPackage.id });
+    document.getElementById('payment-qr-loading').classList.add('hidden');
+
+    if (!ok || result.error) {
+      console.error('create-beam-charge error', result);
+      document.getElementById('payment-qr-unavailable').classList.remove('hidden');
+      showToast(result.error || 'สร้าง QR ไม่สำเร็จ', 'error');
+      return;
+    }
+    if (!result.qrImageUri) {
+      document.getElementById('payment-qr-unavailable').classList.remove('hidden');
+      showToast('ไม่ได้รับ QR จาก Beam กรุณาลองใหม่', 'error');
+      return;
+    }
+
+    currentOrderId = result.orderId;
+    qrPaymentRef = result.chargeId;
+    document.getElementById('qr-image').src = result.qrImageUri;
+    document.getElementById('qr-ref-label').textContent = `อ้างอิง: ${result.chargeId} · ฿${Number(result.amount).toLocaleString('th-TH', { minimumFractionDigits: 2 })}`;
+    document.getElementById('payment-qr-area').classList.remove('hidden');
+    subscribeOrderStatus(currentOrderId);
+  } catch (e) {
+    console.error(e);
+    document.getElementById('payment-qr-loading').classList.add('hidden');
+    document.getElementById('payment-qr-unavailable').classList.remove('hidden');
+    showToast('เชื่อมต่อระบบชำระเงินไม่สำเร็จ', 'error');
+  }
+}
+
+function subscribeOrderStatus(orderId) {
+  unsubscribeOrderStatus();
+
+  orderRealtimeChannel = supabase.channel(`order-${orderId}`)
+    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'orders', filter: `id=eq.${orderId}` }, (payload) => {
+      if (payload.new.status === 'paid') handleOrderPaid(payload.new);
+      else if (payload.new.status === 'failed' || payload.new.status === 'expired') {
+        showToast('การชำระเงินไม่สำเร็จ กรุณาลองใหม่', 'error');
+      }
+    })
+    .subscribe();
+
+  orderPollInterval = setInterval(async () => {
+    const { data } = await supabase.from('orders').select('*').eq('id', orderId).single();
+    if (data?.status === 'paid') handleOrderPaid(data);
+  }, 4000);
+}
+
+function unsubscribeOrderStatus() {
+  if (orderRealtimeChannel) { supabase.removeChannel(orderRealtimeChannel); orderRealtimeChannel = null; }
+  if (orderPollInterval) { clearInterval(orderPollInterval); orderPollInterval = null; }
+}
+
+async function handleOrderPaid(order) {
+  unsubscribeOrderStatus();
+  await loadProfile();
+  updateCoinsDisplay();
+  closeModal('payment-modal');
+  showToast(`ชำระเงินสำเร็จ! ได้รับ ${(order.coins + (order.bonus || 0)).toLocaleString()} เหรียญ 🎉`, 'success');
+  if (!document.getElementById('page-admin').classList.contains('hidden')) initSalesStats();
+  if (!document.getElementById('page-reader').classList.contains('hidden')) renderChapterBody();
+}
+
+async function confirmQrPayment() {
+  if (!currentOrderId) return;
+  showToast('กำลังตรวจสอบสถานะการชำระเงิน...', 'info');
+  try {
+    const { ok, result } = await callEdgeFunction('check-beam-payment-status', { order_id: currentOrderId });
+    if (!ok) { showToast(result.error || 'ตรวจสอบสถานะไม่สำเร็จ', 'error'); return; }
+
+    if (result.status === 'paid') {
+      const { data: full } = await supabase.from('orders').select('*').eq('id', currentOrderId).single();
+      if (full) handleOrderPaid(full);
+    } else if (result.status === 'pending') {
+      showToast('ยังไม่พบการชำระเงิน กรุณาสแกน QR และชำระเงินก่อน', 'warning');
+    } else {
+      showToast('การชำระเงินไม่สำเร็จหรือหมดอายุ กรุณาลองใหม่', 'error');
+    }
+  } catch (e) {
+    console.error(e);
+    showToast('ตรวจสอบสถานะไม่สำเร็จ กรุณาลองใหม่', 'error');
+  }
+}
+
+function cancelQrPayment() {
+  unsubscribeOrderStatus();
+  currentOrderId = null;
+  closeModal('payment-modal');
+  openTopUpModal();
+}
+
+function downloadQRCode() {
+  const img = document.getElementById('qr-image');
+  if (!img || !img.src) return;
+  const link = document.createElement('a');
+  link.download = `promptpay-qr-${qrPaymentRef || 'order'}.png`;
+  link.href = img.src;
+  link.target = '_blank';
+  link.rel = 'noopener';
+  link.click();
+}
+
+function closeModal(id) {
+  document.getElementById(id).classList.add('hidden');
+  if (id === 'payment-modal') {
+    document.getElementById('payment-qr-area').classList.add('hidden');
+    document.getElementById('payment-qr-unavailable').classList.add('hidden');
+    document.getElementById('payment-qr-loading').classList.add('hidden');
+    unsubscribeOrderStatus();
+    qrPaymentRef = null;
+    currentOrderId = null;
+  }
+}
+window.addEventListener('click', (e) => {
+  document.querySelectorAll('.modal-backdrop').forEach(modal => {
+    if (e.target === modal) closeModal(modal.id);
+  });
+});
+
+function updateCoinsDisplay() {
+  document.getElementById('user-coins-display').textContent = (currentProfile?.coins ?? 0).toLocaleString();
+  updateLikedBadge();
+}
+
+function showToast(message, type = 'info') {
+  const container = document.getElementById('toast-container');
+  const toast = document.createElement('div');
+  const bg = { success: 'bg-emerald-500', error: 'bg-rose-500', warning: 'bg-amber-500', info: 'bg-blue-500' }[type] || 'bg-blue-500';
+  toast.className = `${bg} text-white px-4 py-3 rounded-xl shadow-lg toast-enter text-sm font-medium flex items-center gap-2`;
+  const iconName = { success: 'check', error: 'alertCircle', warning: 'alertTriangle', info: 'info' }[type] || 'info';
+  toast.innerHTML = `${icon(iconName, 'text-base')}<span>${message}</span>`;
+  container.appendChild(toast);
+  setTimeout(() => { toast.style.transition = 'opacity .3s'; toast.style.opacity = '0'; setTimeout(() => toast.remove(), 300); }, 3200);
+}
+</script>
+</body>
+</html>

@@ -1929,7 +1929,7 @@ async function confirmQrPayment() {
   if (!currentOrderId) return;
   showToast('กำลังตรวจสอบสถานะการชำระเงิน...', 'info');
   try {
-    const { ok, result } = await callEdgeFunction('check-beam-payment-status', { order_id: currentOrderId });
+    const { ok, result } = await callEdgeFunction('clever-responder', { order_id: currentOrderId });
     if (!ok) { showToast(result.error || 'ตรวจสอบสถานะไม่สำเร็จ', 'error'); return; }
 
     if (result.status === 'paid') {

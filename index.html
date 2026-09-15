@@ -47,6 +47,14 @@
   .toast-enter { animation: slideIn .3s ease-out; }
   @keyframes slideIn { from { transform: translateX(120%); opacity:0; } to { transform: translateX(0); opacity:1; } }
   .reader-prose img { border-radius: 1rem; margin: 1rem 0; }
+  #reader-shell.reader-night-mode { background:#111827 !important; border-color:#334155 !important; color:#e5e7eb !important; }
+  #reader-shell.reader-night-mode #reader-title, #reader-shell.reader-night-mode #chapter-title { color:#f8fafc !important; }
+  #reader-shell.reader-night-mode #reader-author, #reader-shell.reader-night-mode #chapter-content { color:#cbd5e1 !important; }
+  #reader-shell.reader-night-mode #chapter-tabs button, #reader-shell.reader-night-mode #btn-prev-chapter { background:#1f2937 !important; color:#e2e8f0 !important; border-color:#475569 !important; }
+  #reader-shell.reader-night-mode #chapter-locked { background:#172b2a !important; border-color:#0f766e !important; }
+  #reader-shell.reader-night-mode #reader-header { border-color:#334155 !important; }
+  #reader-shell.reader-night-mode #chapter-navigation { border-color:#334155 !important; }
+  #reader-shell.reader-night-mode #reader-theme-toggle { background:#1f2937 !important; color:#facc15 !important; }
   .spinner { border: 3px solid #d1fae5; border-top-color: #10b981; border-radius: 50%; width: 24px; height: 24px; animation: spin 0.8s linear infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }
   .icon-svg { width: 1em; height: 1em; vertical-align: -0.125em; flex-shrink: 0; }
@@ -191,10 +199,27 @@
   </section>
 
   <!-- READER -->
+  <section id="page-novel-detail" class="page-view hidden">
+    <div class="max-w-5xl mx-auto px-4 py-6">
+      <div class="bg-white rounded-3xl overflow-hidden border border-emerald-100 shadow-lg">
+        <div class="grid md:grid-cols-[minmax(260px,360px)_1fr]">
+          <div class="bg-slate-100"><img id="novel-detail-cover" class="w-full h-full min-h-[320px] max-h-[620px] object-cover" alt="ปกนิยาย" /></div>
+          <div class="p-6 md:p-8 flex flex-col">
+            <div class="flex justify-between gap-4"><div><p id="novel-detail-genre" class="text-sm font-semibold text-emerald-700"></p><h1 id="novel-detail-title" class="text-3xl font-bold text-slate-800 mt-2 break-words"></h1><p id="novel-detail-author" class="text-slate-500 mt-2"></p></div><button onclick="closeNovelDetail()" class="text-slate-400 text-2xl" aria-label="กลับ">×</button></div>
+            <div id="novel-detail-badges" class="flex flex-wrap gap-2 mt-5"></div>
+            <h2 class="font-bold text-slate-800 mt-7 mb-2">เรื่องย่อ</h2><div id="novel-detail-synopsis" class="text-slate-600 leading-7 whitespace-pre-wrap break-words"></div>
+            <div class="mt-auto pt-8 flex flex-wrap gap-3"><button id="novel-detail-read" class="px-6 py-3 bg-emerald-600 text-white rounded-xl font-semibold">เริ่มอ่าน</button><button id="novel-detail-share" class="px-5 py-3 bg-blue-50 text-blue-700 rounded-xl font-semibold">แชร์นิยาย</button></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- READER -->
   <section id="page-reader" class="page-view hidden">
     <div class="max-w-4xl mx-auto">
-      <div class="bg-white rounded-2xl p-6 md:p-8 shadow-lg">
-        <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-4 border-b pb-4 gap-3 md:gap-4">
+      <div id="reader-shell" class="bg-white rounded-2xl p-6 md:p-8 shadow-lg transition-colors">
+        <div id="reader-header" class="flex flex-col md:flex-row md:items-center md:justify-between mb-4 border-b pb-4 gap-3 md:gap-4">
           <div class="min-w-0 w-full md:flex-1">
             <h1 id="reader-title" class="text-2xl font-bold text-slate-800 whitespace-normal break-words leading-snug"></h1>
             <p id="reader-author" class="text-sm text-slate-500 mt-1"></p>
@@ -202,6 +227,7 @@
           <div class="flex items-center justify-end gap-2 flex-shrink-0 w-full md:w-auto">
             <button onclick="adjustFontSize(-1)" class="w-9 h-9 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold">A-</button>
             <button onclick="adjustFontSize(1)" class="w-9 h-9 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold">A+</button>
+            <button id="reader-theme-toggle" onclick="toggleReaderNightMode()" class="px-3 py-2 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 font-medium whitespace-nowrap" aria-pressed="false">🌙 กลางคืน</button>
             <button onclick="navigateTo('catalog')" class="px-4 py-2 bg-emerald-50 text-emerald-600 rounded-xl hover:bg-emerald-100 font-medium"><i data-icon="arrowLeft" class="mr-2"></i>กลับ</button>
           </div>
         </div>
@@ -219,7 +245,7 @@
 
         <div id="chapter-content" class="reader-prose max-w-none text-slate-700 leading-relaxed mb-8" style="font-size:16px"></div>
 
-        <div class="flex items-center justify-between border-t pt-6">
+        <div id="chapter-navigation" class="flex items-center justify-between border-t pt-6">
           <button id="btn-prev-chapter" onclick="navigateChapter(-1)" class="px-4 py-2 bg-slate-100 text-slate-700 rounded-xl hover:bg-slate-200 font-medium flex items-center space-x-2 disabled:opacity-40 disabled:cursor-not-allowed"><i data-icon="chevronLeft"></i><span>ตอนก่อนหน้า</span></button>
           <p id="chapter-counter" class="text-sm text-slate-600 font-medium"></p>
           <button id="btn-next-chapter" onclick="navigateChapter(1)" class="px-4 py-2 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 font-medium flex items-center space-x-2 disabled:opacity-40 disabled:cursor-not-allowed"><span>ตอนต่อไป</span><i data-icon="chevronRight"></i></button>
@@ -934,6 +960,7 @@ function initAuthListener() {
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
+  applyReaderTheme();
   supabase.from('site_visits').insert({}).then(() => {}).catch(() => {});
   replaceStaticIcons();
   initAuthListener();
@@ -1071,7 +1098,7 @@ function createNovelCardHTML(novel) {
     : `<span class="px-3 py-1 bg-amber-500 text-white text-[11px] font-bold rounded-full flex items-center gap-1">${icon('clock', '')}กำลังลง</span>`;
 
   return `
-    <div class="bg-white rounded-3xl overflow-hidden border border-emerald-100/80 shadow-sm hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 flex flex-col justify-between group relative">
+    <div onclick="openNovelDetail('${novel.id}')" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openNovelDetail('${novel.id}')}" class="bg-white rounded-3xl overflow-hidden border border-emerald-100/80 shadow-sm hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 flex flex-col justify-between group relative cursor-pointer">
       <div class="relative h-60 w-full overflow-hidden bg-slate-100">
         <img src="${novel.cover}" alt="${novel.title}" onerror="handleCoverImgError(this,'${novel.genre}')" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
         <div class="absolute top-3 left-3 flex flex-col gap-1.5">
@@ -1079,7 +1106,7 @@ function createNovelCardHTML(novel) {
           ${statusBadge}
           ${purchasedCount > 0 ? `<span class="px-3 py-1 bg-emerald-500 text-white text-[11px] font-bold rounded-full flex items-center gap-1">${icon('check', '')}อ่านแล้ว ${purchasedCount} ตอน</span>` : ''}
         </div>
-        <button onclick="toggleLikeNovel('${novel.id}')" class="absolute top-3 right-3 w-10 h-10 rounded-full bg-white/90 backdrop-blur flex items-center justify-center hover:bg-white transition-all shadow-lg">
+        <button onclick="event.stopPropagation();toggleLikeNovel('${novel.id}')" class="absolute top-3 right-3 w-10 h-10 rounded-full bg-white/90 backdrop-blur flex items-center justify-center hover:bg-white transition-all shadow-lg">
           ${icon('heart', `text-lg transition-all ${isLiked ? 'text-rose-500' : 'text-slate-400'}`, isLiked)}
         </button>
         <div class="absolute bottom-3 right-3 bg-white/90 backdrop-blur px-2.5 py-1 rounded-full text-[11px] font-bold text-amber-600 flex items-center">${icon('star', 'mr-1', true)}${novel.rating}</div>
@@ -1093,8 +1120,8 @@ function createNovelCardHTML(novel) {
         </div>
         <p class="text-xs text-slate-600 line-clamp-2 mb-4 flex-grow">${novel.synopsis}</p>
          ${hasChapters
-           ? `<div class="flex gap-2"><button onclick="openNovelReader('${novel.id}')" class="flex-1 px-3 py-2 bg-emerald-600 text-white text-sm font-semibold rounded-xl hover:bg-emerald-700 transition-all flex items-center justify-center gap-1">${icon('book', '')}เริ่มอ่าน</button><button onclick="shareNovel('${novel.id}')" class="px-3 py-2 bg-blue-50 text-blue-700 rounded-xl" title="แชร์นิยาย">${icon('share', '')}</button></div>`
-           : `<div class="flex gap-2"><button disabled class="flex-1 px-3 py-2 bg-slate-200 text-slate-400 text-sm font-semibold rounded-xl cursor-not-allowed">ยังไม่มีตอน</button><button onclick="shareNovel('${novel.id}')" class="px-3 py-2 bg-blue-50 text-blue-700 rounded-xl" title="แชร์นิยาย">${icon('share', '')}</button></div>`}
+           ? `<div class="flex gap-2"><button onclick="event.stopPropagation();openNovelReader('${novel.id}')" class="flex-1 px-3 py-2 bg-emerald-600 text-white text-sm font-semibold rounded-xl hover:bg-emerald-700 transition-all flex items-center justify-center gap-1">${icon('book', '')}เริ่มอ่าน</button><button onclick="event.stopPropagation();shareNovel('${novel.id}')" class="px-3 py-2 bg-blue-50 text-blue-700 rounded-xl" title="แชร์นิยาย">${icon('share', '')}</button></div>`
+           : `<div class="flex gap-2"><button disabled onclick="event.stopPropagation()" class="flex-1 px-3 py-2 bg-slate-200 text-slate-400 text-sm font-semibold rounded-xl cursor-not-allowed">ยังไม่มีตอน</button><button onclick="event.stopPropagation();shareNovel('${novel.id}')" class="px-3 py-2 bg-blue-50 text-blue-700 rounded-xl" title="แชร์นิยาย">${icon('share', '')}</button></div>`}
       </div>
     </div>
   `;
@@ -1175,6 +1202,29 @@ function renderBookshelf(tab) {
   document.getElementById('bookshelf-grid').innerHTML = items.map(createNovelCardHTML).join('');
   document.getElementById('bookshelf-empty').classList.toggle('hidden', items.length > 0);
 }
+
+let currentNovelDetailReturnPage = 'catalog';
+function openNovelDetail(novelId) {
+  const novel = novels.find(n => n.id === novelId); if (!novel) return;
+  currentNovelDetailReturnPage = [...document.querySelectorAll('.page-view')].find(el => !el.classList.contains('hidden'))?.id.replace('page-', '') || 'catalog';
+  const price = getNovelPriceInfo(novel);
+  document.getElementById('novel-detail-cover').src = novel.cover || '';
+  document.getElementById('novel-detail-cover').alt = novel.title;
+  document.getElementById('novel-detail-genre').textContent = novel.genre || '';
+  document.getElementById('novel-detail-title').textContent = novel.title || '';
+  document.getElementById('novel-detail-author').textContent = `ผู้แต่ง: ${novel.author || 'ไม่ระบุ'} · ⭐ ${novel.rating || 0}`;
+  document.getElementById('novel-detail-badges').innerHTML = `<span class="px-3 py-1 rounded-full bg-blue-100 text-blue-800 text-sm">${novel.chapters.length} ตอน</span><span class="px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-sm">${price.label}</span><span class="px-3 py-1 rounded-full ${novel.status === 'completed' ? 'bg-blue-100 text-blue-800' : 'bg-amber-100 text-amber-800'} text-sm">${novel.status === 'completed' ? 'จบแล้ว' : 'กำลังลง'}</span>`;
+  document.getElementById('novel-detail-synopsis').textContent = novel.synopsis || 'ยังไม่มีคำอธิบาย';
+  const readButton = document.getElementById('novel-detail-read');
+  readButton.disabled = !novel.chapters.length;
+  readButton.className = `px-6 py-3 rounded-xl font-semibold ${novel.chapters.length ? 'bg-emerald-600 text-white hover:bg-emerald-700' : 'bg-slate-200 text-slate-400 cursor-not-allowed'}`;
+  readButton.textContent = novel.chapters.length ? 'เริ่มอ่าน' : 'ยังไม่มีตอน';
+  readButton.onclick = () => { if (novel.chapters.length) openNovelReader(novelId); };
+  document.getElementById('novel-detail-share').onclick = () => shareNovel(novelId);
+  navigateTo('novel-detail');
+}
+
+function closeNovelDetail() { navigateTo(currentNovelDetailReturnPage === 'novel-detail' ? 'catalog' : currentNovelDetailReturnPage); }
 
 function openNovelReader(novelId) {
   const novel = novels.find(n => n.id === novelId);
@@ -1268,6 +1318,22 @@ function adjustFontSize(delta) {
   readerFontSize = Math.max(12, Math.min(28, readerFontSize + delta * 2));
   const el = document.getElementById('chapter-content');
   if (el) el.style.fontSize = readerFontSize + 'px';
+}
+
+function applyReaderTheme() {
+  const isNight = localStorage.getItem('reader-night-mode') === 'true';
+  const shell = document.getElementById('reader-shell');
+  const button = document.getElementById('reader-theme-toggle');
+  if (!shell || !button) return;
+  shell.classList.toggle('reader-night-mode', isNight);
+  button.textContent = isNight ? '☀️ กลางวัน' : '🌙 กลางคืน';
+  button.setAttribute('aria-pressed', String(isNight));
+}
+
+function toggleReaderNightMode() {
+  const isNight = localStorage.getItem('reader-night-mode') !== 'true';
+  localStorage.setItem('reader-night-mode', String(isNight));
+  applyReaderTheme();
 }
 
 async function purchaseChapter() {

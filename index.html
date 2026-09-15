@@ -205,7 +205,7 @@
         <div class="grid md:grid-cols-[minmax(260px,360px)_1fr]">
           <div class="bg-slate-100"><img id="novel-detail-cover" class="w-full h-full min-h-[320px] max-h-[620px] object-cover" alt="ปกนิยาย" /></div>
           <div class="p-6 md:p-8 flex flex-col">
-            <div class="flex justify-between items-start gap-2"><div class="flex-1 min-w-0 pr-1"><p id="novel-detail-genre" class="text-sm font-semibold text-emerald-700"></p><h1 id="novel-detail-title" class="text-xl sm:text-3xl font-bold text-slate-800 mt-2 leading-snug"></h1><p id="novel-detail-author" class="text-slate-500 mt-2"></p></div><button onclick="closeNovelDetail()" class="text-slate-400 text-2xl flex-shrink-0 leading-none" aria-label="กลับ">×</button></div>
+            <div class="flex justify-between items-start gap-2"><div class="flex-1 min-w-0 pr-1"><div id="novel-detail-genre" class="flex flex-wrap gap-1.5"></div><h1 id="novel-detail-title" class="text-xl sm:text-3xl font-bold text-slate-800 mt-2 leading-snug"></h1><p id="novel-detail-author" class="text-slate-500 mt-2"></p></div><button onclick="closeNovelDetail()" class="text-slate-400 text-2xl flex-shrink-0 leading-none" aria-label="กลับ">×</button></div>
             <div id="novel-detail-badges" class="flex flex-wrap gap-2 mt-5"></div>
             <h2 class="font-bold text-slate-800 mt-7 mb-2">เรื่องย่อ</h2><div id="novel-detail-synopsis" class="text-slate-600 leading-7 whitespace-pre-wrap break-words"></div>
             <div class="mt-auto pt-8 flex flex-wrap gap-3"><button id="novel-detail-read" class="px-6 py-3 bg-emerald-600 text-white rounded-xl font-semibold">เริ่มอ่าน</button><button id="novel-detail-share" class="px-5 py-3 bg-blue-50 text-blue-700 rounded-xl font-semibold">แชร์นิยาย</button></div>
@@ -418,18 +418,11 @@
         <input type="text" id="form-title" placeholder="ชื่อนิยาย" required class="px-4 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-400" />
         <div class="space-y-2"><select id="form-author" required onchange="toggleCustomNovelField('author')" class="w-full px-4 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-400"><option value="">เลือกผู้แต่งเดิม</option></select><input type="text" id="form-author-custom" placeholder="พิมพ์ผู้แต่งใหม่" class="hidden w-full px-4 py-2 border border-emerald-300 rounded-xl" /></div>
       </div>
-      <div class="grid grid-cols-2 gap-4">
-        <select id="form-genre" required onchange="toggleCustomNovelField('genre')" class="px-4 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-400">
-          <option value="">เลือกหมวด</option>
-          <option value="โรแมนติก">โรแมนติก</option>
-          <option value="แฟนตาซี">แฟนตาซี</option>
-          <option value="กำลังภายใน">กำลังภายใน</option>
-          <option value="สืบสวน">สืบสวน</option>
-          <option value="สยองขวัญ">สยองขวัญ</option><option value="__new__">+ เพิ่มหมวดหมู่ใหม่</option>
-        </select>
-        <input type="text" id="form-genre-custom" placeholder="พิมพ์หมวดหมู่ใหม่" class="hidden w-full px-4 py-2 border border-emerald-300 rounded-xl" />
-        <input type="number" id="form-price-per-chapter" placeholder="ราคาต่อตอน (เหรียญ)" min="0" required class="px-4 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-400" />
+      <div class="space-y-3">
+        <div><p class="text-sm font-semibold text-slate-700 mb-2">แนวนิยาย (เลือกได้หลายแนว)</p><div id="form-genre-options" class="flex flex-wrap gap-2 max-h-36 overflow-y-auto p-3 border border-slate-200 rounded-xl bg-slate-50"></div></div>
+        <div class="flex gap-2"><input type="text" id="form-genre-custom" placeholder="พิมพ์แนวใหม่ (ไม่บังคับ)" class="flex-1 min-w-0 px-4 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-400" /><button type="button" onclick="addCustomNovelGenre()" class="px-4 py-2 bg-emerald-50 text-emerald-700 rounded-xl font-semibold">เพิ่มแนว</button></div>
       </div>
+      <input type="number" id="form-price-per-chapter" placeholder="ราคาต่อตอน (เหรียญ)" min="0" required class="w-full px-4 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-400" />
       <select id="form-status" class="w-full px-4 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-400">
         <option value="ongoing">ยังไม่จบ (กำลังลงตอนใหม่)</option>
         <option value="completed">จบแล้ว</option>
@@ -1043,8 +1036,16 @@ function getNovelPriceInfo(novel) {
   return { label, min, max, allFree: false };
 }
 
+function getNovelGenres(value) {
+  return [...new Set(String(value || '').split(/\s*\|\s*|,\s*/).map(g => g.trim()).filter(Boolean))];
+}
+
+function escapeHtml(value) {
+  return String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]);
+}
+
 function renderHome() {
-  const genres = Array.from(new Set(novels.map(n => n.genre)));
+  const genres = [...new Set(novels.flatMap(n => getNovelGenres(n.genre)))];
   document.getElementById('genre-pills').innerHTML = genres.map(g => `
     <button onclick="goToGenre('${g}')" class="px-4 py-2 bg-white border border-emerald-200 rounded-full text-sm font-semibold text-emerald-700 hover:bg-emerald-50 hover:border-emerald-400 transition-all shadow-sm">${g}</button>
   `).join('');
@@ -1064,8 +1065,8 @@ function goToGenre(genre) {
 function updateGenreFilterDropdown() {
   const select = document.getElementById('filter-genre');
   const current = select.value;
-  const genres = Array.from(new Set(novels.map(n => n.genre)));
-  select.innerHTML = `<option value="ทั้งหมด">ทั้งหมดทุกหมวด</option>` + genres.map(g => `<option value="${g}">${g}</option>`).join('');
+  const genres = [...new Set(novels.flatMap(n => getNovelGenres(n.genre)))];
+  select.innerHTML = `<option value="ทั้งหมด">ทั้งหมดทุกหมวด</option>` + genres.map(g => `<option value="${escapeHtml(g)}">${escapeHtml(g)}</option>`).join('');
   select.value = genres.includes(current) ? current : 'ทั้งหมด';
 }
 
@@ -1074,7 +1075,7 @@ function applyFilters() {
   const sortBy = document.getElementById('filter-sort').value;
   const search = (document.getElementById('filter-search').value || '').trim().toLowerCase();
 
-  let filtered = novels.filter(n => (genre === 'ทั้งหมด' || n.genre === genre) &&
+  let filtered = novels.filter(n => (genre === 'ทั้งหมด' || getNovelGenres(n.genre).includes(genre)) &&
     (search === '' || n.title.toLowerCase().includes(search) || n.author.toLowerCase().includes(search)));
 
   if (sortBy === 'popular') filtered.sort((a, b) => b.rating - a.rating);
@@ -1107,7 +1108,6 @@ function createNovelCardHTML(novel) {
       <div class="relative h-60 w-full overflow-hidden bg-slate-100">
         <img src="${novel.cover}" alt="${novel.title}" loading="lazy" decoding="async" onerror="handleCoverImgError(this,'${novel.genre}')" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
         <div class="absolute top-3 left-3 flex flex-col gap-1.5">
-          <span class="px-3 py-1 bg-emerald-900/80 backdrop-blur-md text-white text-[11px] font-bold rounded-full">${novel.genre}</span>
           ${statusBadge}
           ${purchasedCount > 0 ? `<span class="px-3 py-1 bg-emerald-500 text-white text-[11px] font-bold rounded-full flex items-center gap-1">${icon('check', '')}อ่านแล้ว ${purchasedCount} ตอน</span>` : ''}
         </div>
@@ -1118,7 +1118,8 @@ function createNovelCardHTML(novel) {
       </div>
       <div class="p-4 flex-grow flex flex-col">
         <h3 class="font-bold text-slate-800 line-clamp-2 mb-1">${novel.title}</h3>
-        <p class="text-xs text-slate-500 mb-3">ผู้แต่ง: ${novel.author}</p>
+        <p class="text-xs text-slate-500 mb-2">ผู้แต่ง: ${novel.author}</p>
+        <div class="flex flex-wrap gap-1 mb-3">${getNovelGenres(novel.genre).map(g => `<span class="px-2 py-1 bg-emerald-50 text-emerald-700 text-[10px] font-bold rounded-full">${escapeHtml(g)}</span>`).join('')}</div>
         <div class="flex flex-wrap gap-1 mb-3">
           <span class="px-2 py-1 bg-blue-100 text-blue-800 text-[10px] font-bold rounded-full">${novel.chapters.length} ตอน</span>
           <span class="px-2 py-1 bg-emerald-100 text-emerald-800 text-[10px] font-bold rounded-full">${priceLabel}</span>
@@ -1215,7 +1216,7 @@ function openNovelDetail(novelId) {
   const price = getNovelPriceInfo(novel);
   document.getElementById('novel-detail-cover').src = novel.cover || '';
   document.getElementById('novel-detail-cover').alt = novel.title;
-  document.getElementById('novel-detail-genre').textContent = novel.genre || '';
+  document.getElementById('novel-detail-genre').innerHTML = getNovelGenres(novel.genre).map(g => `<span class="px-3 py-1 bg-emerald-50 text-emerald-700 text-xs font-bold rounded-full">${escapeHtml(g)}</span>`).join('');
   document.getElementById('novel-detail-title').textContent = novel.title || '';
   document.getElementById('novel-detail-author').textContent = `ผู้แต่ง: ${novel.author || 'ไม่ระบุ'} · ⭐ ${novel.rating || 0}`;
   document.getElementById('novel-detail-badges').innerHTML = `<span class="px-3 py-1 rounded-full bg-blue-100 text-blue-800 text-sm">${novel.chapters.length} ตอน</span><span class="px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-sm">${price.label}</span><span class="px-3 py-1 rounded-full ${novel.status === 'completed' ? 'bg-blue-100 text-blue-800' : 'bg-amber-100 text-amber-800'} text-sm">${novel.status === 'completed' ? 'จบแล้ว' : 'กำลังลง'}</span>`;
@@ -1247,7 +1248,7 @@ function openNovelReader(novelId) {
   supabase.rpc('increment_view_count', { p_novel_id: novelId }).then(({ error }) => { if (error) console.warn('increment_view_count:', error); });
 
   document.getElementById('reader-title').textContent = novel.title;
-  document.getElementById('reader-author').textContent = `ผู้แต่ง: ${novel.author} · ${novel.genre}`;
+  document.getElementById('reader-author').textContent = `ผู้แต่ง: ${novel.author} · ${getNovelGenres(novel.genre).join(' · ')}`;
 
   renderChapterTabs();
   renderChapterBody();
@@ -1446,7 +1447,7 @@ function renderAdminNovelsTable() {
     <tr class="hover:bg-slate-50 transition-colors border-b border-slate-100">
       <td class="p-3"><img src="${n.cover}" alt="${n.title}" onerror="handleCoverImgError(this,'${n.genre}')" class="w-12 h-16 object-cover rounded-lg shadow-sm" /></td>
       <td class="p-3"><span class="block font-bold text-slate-800">${n.title}</span><span class="text-xs text-slate-400">ผู้แต่ง: ${n.author}</span></td>
-      <td class="p-3"><span class="px-2.5 py-0.5 bg-emerald-100 text-emerald-800 text-xs font-bold rounded-full">${n.genre}</span></td>
+      <td class="p-3"><div class="flex flex-wrap gap-1">${getNovelGenres(n.genre).map(g => `<span class="px-2.5 py-0.5 bg-emerald-100 text-emerald-800 text-xs font-bold rounded-full">${escapeHtml(g)}</span>`).join('')}</div></td>
       <td class="p-3"><span class="px-2.5 py-0.5 ${n.status === 'completed' ? 'bg-blue-100 text-blue-800' : 'bg-amber-100 text-amber-800'} text-xs font-bold rounded-full">${n.status === 'completed' ? 'จบแล้ว' : 'ยังไม่จบ'}</span></td>
       <td class="p-3 text-slate-600 font-medium">${getNovelPriceInfo(n).label}</td>
       <td class="p-3 text-slate-600 font-bold">${n.chapters.length} ตอน</td>
@@ -1466,7 +1467,6 @@ function openNovelModal(novelId = null) {
   populateNovelAuthorOptions();
   populateNovelGenreOptions();
   document.getElementById('form-author-custom').classList.add('hidden');
-  document.getElementById('form-genre-custom').classList.add('hidden');
   pendingCoverDataUri = null;
   document.getElementById('form-cover-file').value = '';
   document.getElementById('clear-cover-upload-btn').classList.add('hidden');
@@ -1477,7 +1477,7 @@ function openNovelModal(novelId = null) {
     document.getElementById('form-novel-id').value = novelId;
     document.getElementById('form-title').value = novel.title;
     document.getElementById('form-author').value = novel.author;
-    document.getElementById('form-genre').value = novel.genre;
+    populateNovelGenreOptions(getNovelGenres(novel.genre));
     document.getElementById('form-price-per-chapter').value = novel.pricePerChapter;
     document.getElementById('form-cover').value = novel.cover.startsWith('data:') ? '' : novel.cover;
     document.getElementById('form-status').value = novel.status || 'ongoing';
@@ -1501,10 +1501,20 @@ function populateNovelAuthorOptions() {
   select.innerHTML = '<option value="">เลือกผู้แต่งเดิม</option>' + authors.map(a => `<option value="${a.replace(/"/g, '&quot;')}">${a}</option>`).join('') + '<option value="__new__">+ เพิ่มผู้แต่งใหม่</option>';
 }
 
-function populateNovelGenreOptions() {
-  const select = document.getElementById('form-genre');
-  const genres = [...new Set(novels.map(n => String(n.genre || '').trim()).filter(Boolean))];
-  select.innerHTML = '<option value="">เลือกหมวด</option>' + genres.map(g => `<option value="${g.replace(/"/g, '&quot;')}">${g}</option>`).join('') + '<option value="__new__">+ เพิ่มหมวดหมู่ใหม่</option>';
+function populateNovelGenreOptions(selectedGenres = []) {
+  const container = document.getElementById('form-genre-options');
+  if (!container) return;
+  const genres = [...new Set([...novels.flatMap(n => getNovelGenres(n.genre)), ...selectedGenres])].sort((a, b) => a.localeCompare(b, 'th'));
+  container.innerHTML = genres.map(genre => `<label class="inline-flex items-center gap-2 px-3 py-2 bg-white border border-slate-200 rounded-full text-sm cursor-pointer hover:border-emerald-400"><input type="checkbox" class="novel-genre-checkbox accent-emerald-600" value="${escapeHtml(genre)}" ${selectedGenres.includes(genre) ? 'checked' : ''}><span>${escapeHtml(genre)}</span></label>`).join('') || '<span class="text-sm text-slate-400">ยังไม่มีแนวเดิม เพิ่มแนวใหม่ด้านล่างได้เลย</span>';
+}
+
+function addCustomNovelGenre() {
+  const input = document.getElementById('form-genre-custom');
+  const value = input.value.trim();
+  if (!value) { input.focus(); return; }
+  const selected = [...document.querySelectorAll('.novel-genre-checkbox:checked')].map(el => el.value);
+  populateNovelGenreOptions([...new Set([...selected, ...getNovelGenres(value)])]);
+  input.value = '';
 }
 
 function toggleCustomNovelField(type) {
@@ -1561,9 +1571,10 @@ async function saveNovelForm(e) {
   const id = document.getElementById('form-novel-id').value;
   const title = document.getElementById('form-title').value.trim();
   const authorSelect = document.getElementById('form-author').value;
-  const genreSelect = document.getElementById('form-genre').value;
   const author = (authorSelect === '__new__' ? document.getElementById('form-author-custom').value : authorSelect).trim();
-  const genre = (genreSelect === '__new__' ? document.getElementById('form-genre-custom').value : genreSelect).trim();
+  const customGenres = getNovelGenres(document.getElementById('form-genre-custom').value);
+  const genre = [...new Set([...Array.from(document.querySelectorAll('.novel-genre-checkbox:checked'), el => el.value), ...customGenres])].join(' | ');
+  if (!genre) { showToast('กรุณาเลือกหรือเพิ่มแนวนิยายอย่างน้อย 1 แนว', 'warning'); return; }
   const pricePerChapter = parseFloat(document.getElementById('form-price-per-chapter').value) || 0;
   const typedCoverUrl = document.getElementById('form-cover').value.trim();
   const status = document.getElementById('form-status').value;

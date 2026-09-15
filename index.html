@@ -24,7 +24,6 @@
   }
 </script>
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
@@ -149,6 +148,7 @@
   <section id="page-home" class="page-view space-y-10">
     <div id="diagnostic-banner" class="hidden rounded-2xl border-2 border-rose-300 bg-rose-50 p-4 text-sm text-rose-800"></div>
     <div id="public-banners-home" class="space-y-3"></div>
+    <p id="home-loading-indicator" class="text-center text-sm text-slate-400 py-4">กำลังโหลดนิยาย...</p>
 
     <div>
       <div class="flex items-center justify-between mb-4">
@@ -715,7 +715,7 @@ function clearDiagnostic() {
 }
 
 async function loadNovels() {
-  const { data, error } = await supabase.from('novels').select('*').order('created_at', { ascending: false });
+  const { data, error } = await supabase.from('novels').select('id,title,author,genre,price_per_chapter,rating,view_count,status,cover_url,synopsis,homepage_tags,created_at').order('created_at', { ascending: false });
   if (error) {
     console.error('loadNovels error:', error);
     showToast('โหลดข้อมูลนิยายไม่สำเร็จ ตรวจสอบการตั้งค่า Supabase', 'error');
@@ -725,6 +725,7 @@ async function loadNovels() {
        <span class="text-xs">สาเหตุที่พบบ่อย: URL/ANON_KEY ในไฟล์นี้ผิด หรือยังไม่ได้รัน setup.sql บนโปรเจกต์นี้</span>`
     );
     novels = [];
+    document.getElementById('home-loading-indicator')?.classList.add('hidden');
     return;
   }
   novels = (data || []).map(n => ({
@@ -745,6 +746,8 @@ async function loadNovels() {
     clearDiagnostic();
   }
   await refreshAllChaptersMeta();
+  document.getElementById('home-loading-indicator')?.classList.add('hidden');
+  renderHome();
 }
 
 async function refreshAllChaptersMeta() {
@@ -966,10 +969,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   initAuthListener();
   updateAuthUI();
   updateAdminUIState();
-    await Promise.all([loadNovels(), loadCoinPackages(), renderPublicBanners()]);
-  updateCoinsDisplay();
   navigateTo('home');
-  showToast('ยินดีต้อนรับสู่นิยายหลังบ้าน 🌿', 'success');
+  // Show the shell immediately; load the independent datasets in the background.
+  void loadNovels().then(() => updateCoinsDisplay());
+  void loadCoinPackages();
+  void renderPublicBanners();
+  updateCoinsDisplay();
 });
 
 function navigateTo(pageId) {
@@ -1100,7 +1105,7 @@ function createNovelCardHTML(novel) {
   return `
     <div onclick="openNovelDetail('${novel.id}')" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openNovelDetail('${novel.id}')}" class="bg-white rounded-3xl overflow-hidden border border-emerald-100/80 shadow-sm hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 flex flex-col justify-between group relative cursor-pointer">
       <div class="relative h-60 w-full overflow-hidden bg-slate-100">
-        <img src="${novel.cover}" alt="${novel.title}" onerror="handleCoverImgError(this,'${novel.genre}')" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+        <img src="${novel.cover}" alt="${novel.title}" loading="lazy" decoding="async" onerror="handleCoverImgError(this,'${novel.genre}')" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
         <div class="absolute top-3 left-3 flex flex-col gap-1.5">
           <span class="px-3 py-1 bg-emerald-900/80 backdrop-blur-md text-white text-[11px] font-bold rounded-full">${novel.genre}</span>
           ${statusBadge}
@@ -1833,9 +1838,23 @@ async function initSalesStats() {
   try { updateSalesMetrics(); } catch (err) { console.error('Sales metrics error:', err); }
 }
 
+let chartJsLoadPromise = null;
+function loadChartJsOnDemand() {
+  if (window.Chart) return Promise.resolve();
+  if (chartJsLoadPromise) return chartJsLoadPromise;
+  chartJsLoadPromise = new Promise((resolve, reject) => {
+    const script = document.createElement('script');
+    script.src = 'https://cdn.jsdelivr.net/npm/chart.js';
+    script.onload = resolve;
+    script.onerror = () => { chartJsLoadPromise = null; reject(new Error('โหลด Chart.js ไม่สำเร็จ')); };
+    document.head.appendChild(script);
+  });
+  return chartJsLoadPromise;
+}
+
 function updateSalesChart() {
   if (typeof Chart === 'undefined') {
-    console.warn('Chart.js not loaded — skipping sales chart render.');
+    loadChartJsOnDemand().then(updateSalesChart).catch(err => console.error(err));
     return;
   }
   const ctx = document.getElementById('sales-chart').getContext('2d');

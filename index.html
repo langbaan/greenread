@@ -313,7 +313,7 @@
         </table>
       </div>
     </div>
-    <div id="admin-ranking-content" class="hidden space-y-4"><div class="bg-white p-6 rounded-2xl border border-slate-200"><h3 class="text-lg font-bold mb-3">เลือกนิยายแสดงบนหน้าแรก</h3><p class="text-sm text-slate-500 mb-4">เลือกได้หลายหัวข้อ แล้วกดบันทึก</p><div id="admin-ranking-list" class="space-y-2"></div><button onclick="saveHomepageRanking()" class="mt-4 px-5 py-2 bg-emerald-600 text-white rounded-xl font-semibold">บันทึกการจัดอันดับ</button></div></div>
+    <div id="admin-ranking-content" class="hidden space-y-4"><div class="bg-white p-6 rounded-2xl border border-slate-200"><h3 class="text-lg font-bold mb-3">จัดนิยายขึ้นหน้าแรก</h3><p class="text-sm text-slate-500 mb-4">เลือกนิยายใส่ได้ 3 หัวข้อ และเพิ่มจำนวนเรื่องได้ไม่จำกัด</p><div id="admin-ranking-list" class="grid grid-cols-1 lg:grid-cols-3 gap-4"></div><button onclick="saveHomepageRanking()" class="mt-4 px-5 py-2 bg-emerald-600 text-white rounded-xl font-semibold">บันทึกการจัดอันดับ</button></div></div>
 
     <div id="admin-web-content" class="hidden space-y-4">
       <div class="bg-white p-6 rounded-2xl border border-slate-200 space-y-3">
@@ -455,8 +455,8 @@
 </div>
 
 <!-- CHAPTER MANAGER MODAL -->
-<div id="chapter-modal" class="modal-backdrop hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 overflow-y-auto">
-  <div class="bg-white rounded-3xl max-w-7xl w-full h-[95vh] max-h-[95vh] p-5 md:p-8 shadow-2xl my-2 overflow-y-auto lg:overflow-hidden grid grid-cols-1 lg:grid-cols-2 grid-rows-[auto_minmax(0,1fr)] gap-x-6">
+<div id="chapter-modal" class="modal-backdrop hidden fixed inset-0 bg-black/50 flex items-center justify-center z-[60] p-4 overflow-y-auto">
+  <div class="bg-white rounded-3xl max-w-7xl w-full h-[95vh] max-h-[95vh] p-5 md:p-8 shadow-2xl my-2 overflow-y-auto lg:overflow-hidden grid grid-cols-1 lg:grid-cols-2 grid-rows-[auto_auto_minmax(0,1fr)] lg:grid-rows-[auto_minmax(0,1fr)] gap-x-6">
     <div class="flex justify-between items-center mb-1 lg:col-span-2 border-b border-slate-200 pb-4">
       <div>
         <h2 class="text-2xl font-bold text-slate-800">จัดการตอนนิยาย</h2>
@@ -1424,7 +1424,12 @@ function switchAdminTab(tab) {
 async function searchAdminOrders() { const email=document.getElementById('admin-order-email')?.value.trim(), box=document.getElementById('admin-order-results'); if(!email){showToast('กรุณากรอกอีเมลลูกค้า','warning');return;} box.innerHTML='กำลังค้นหา...'; const {data,error}=await supabase.rpc('admin_find_coin_orders',{p_email:email}); if(error){box.innerHTML=`<div class="bg-rose-50 text-rose-700 p-4 rounded-xl">${error.message}</div>`;return;} box.innerHTML=data?.length?data.map(o=>`<div class="bg-white p-5 rounded-2xl border flex justify-between gap-3"><div><b>ออเดอร์ ${o.id}</b><p>${o.coins+o.bonus} เหรียญ · ฿${o.amount} · ${o.status}</p><small>วันที่และเวลา: ${new Date(o.created_at).toLocaleString('th-TH', { dateStyle: 'medium', timeStyle: 'short' })}<br>${o.coins_credited?'เติมแล้ว':'ยังไม่เติมเหรียญ'}</small></div>${o.status==='paid'&&!o.coins_credited?`<button onclick="adminCreditOrder('${o.id}')" class="px-4 py-2 bg-emerald-600 text-white rounded-xl">เติมเหรียญ</button>`:''}</div>`).join(''):'<div class="bg-white p-4 rounded-xl">ไม่พบออเดอร์</div>'; }
 async function adminCreditOrder(orderId) { if(!confirm('ยืนยันเติมเหรียญให้ออเดอร์นี้?'))return; const {error}=await supabase.rpc('admin_credit_order',{p_order_id:orderId}); if(error)return showToast(error.message,'error'); showToast('เติมเหรียญเรียบร้อยแล้ว','success'); searchAdminOrders(); }
 
-function renderHomepageRanking() { const box=document.getElementById('admin-ranking-list'); if(!box) return; box.innerHTML=novels.map(n=>`<div class="flex flex-wrap items-center gap-3 border-b py-2"><b class="flex-1">${n.title}</b><label><input type="checkbox" data-rank="free" data-id="${n.id}" ${(n.homepageTags||[]).includes('free')?'checked':''}> อ่านฟรี</label><label><input type="checkbox" data-rank="best" data-id="${n.id}" ${(n.homepageTags||[]).includes('best')?'checked':''}> ขายดี</label><label><input type="checkbox" data-rank="recommended" data-id="${n.id}" ${(n.homepageTags||[]).includes('recommended')?'checked':''}> แนะนำ</label></div>`).join(''); }
+function renderHomepageRanking() {
+  const box = document.getElementById('admin-ranking-list');
+  if (!box) return;
+  const groups = [['free', 'อ่านฟรี'], ['best', 'ขายดี'], ['recommended', 'แนะนำ']];
+  box.innerHTML = groups.map(([tag, label]) => `<section class="rounded-2xl border border-slate-200 bg-slate-50 p-4"><h4 class="font-bold text-slate-800 mb-3">${label}</h4><div class="space-y-2">${novels.map(n => `<label class="flex items-start gap-2 bg-white rounded-xl border border-slate-100 p-2 cursor-pointer"><input type="checkbox" data-rank="${tag}" data-id="${n.id}" ${(n.homepageTags||[]).includes(tag) ? 'checked' : ''} class="mt-1"><span class="text-sm text-slate-700">${escapeHtml(n.title)}</span></label>`).join('')}</div></section>`).join('');
+}
 async function saveHomepageRanking() {
   const updates = novels.map(n => ({ novel: n, tags: ['free','best','recommended'].filter(t => document.querySelector(`[data-rank="${t}"][data-id="${n.id}"]`)?.checked) }));
   const results = await Promise.all(updates.map(({ novel, tags }) => supabase.from('novels').update({ homepage_tags: tags }).eq('id', novel.id)));
@@ -1672,6 +1677,7 @@ async function deleteNovel(novelId) {
 async function openChapterManager(novelId) {
   const novel = novels.find(n => n.id === novelId);
   if (!novel) return;
+  closeModal('novel-modal');
   chapterManagerNovelId = novelId;
   document.getElementById('chapter-modal-novel-title').textContent = novel.title;
   cancelChapterEdit();

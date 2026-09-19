@@ -1646,22 +1646,13 @@ async function openChapterManager(novelId) {
   cancelChapterEdit();
   await loadAdminChaptersForNovel(novelId);
   renderChapterManagerList();
-  void loadAdminChapterImageFlags(novelId);
   document.getElementById('chapter-modal').classList.remove('hidden');
 }
 
 async function loadAdminChaptersForNovel(novelId) {
-  const { data, error } = await supabase.from('chapters').select('id,novel_id,number,title,is_free,price,created_at').eq('novel_id', novelId).order('number');
+  const { data, error } = await supabase.from('chapters').select('id,novel_id,number,title,is_free,price,has_image,created_at').eq('novel_id', novelId).order('number');
   if (error) { showToast('โหลดตอนไม่สำเร็จ: ' + error.message, 'error'); adminChaptersCache = []; return; }
-  adminChaptersCache = (data || []).map(chapter => ({ ...chapter, hasImage: false }));
-}
-
-async function loadAdminChapterImageFlags(novelId) {
-  const { data, error } = await supabase.from('chapters').select('id,content').eq('novel_id', novelId);
-  if (error) { console.warn('ตรวจรูปประกอบตอนไม่สำเร็จ:', error.message); return; }
-  const imageById = new Map((data || []).map(chapter => [chapter.id, /<img\b/i.test(String(chapter.content || ''))]));
-  adminChaptersCache = adminChaptersCache.map(chapter => ({ ...chapter, hasImage: imageById.get(chapter.id) === true }));
-  if (chapterManagerNovelId === novelId && !document.getElementById('chapter-modal')?.classList.contains('hidden')) renderChapterManagerList();
+  adminChaptersCache = data || [];
 }
 
 function renderChapterManagerList() {
@@ -1808,12 +1799,12 @@ async function saveChapterForm(e) {
   const price = isFree ? 0 : (parseFloat(document.getElementById('chapter-form-price').value) || 0);
 
   if (chapterId) {
-    const { error } = await supabase.from('chapters').update({ title, content, is_free: isFree, price }).eq('id', chapterId);
+    const { error } = await supabase.from('chapters').update({ title, content, has_image: /<img\b/i.test(content), is_free: isFree, price }).eq('id', chapterId);
     if (error) { showToast('บันทึกไม่สำเร็จ: ' + error.message, 'error'); return; }
     showToast('บันทึกการแก้ไขตอนเรียบร้อยแล้ว', 'success');
   } else {
     const nextNumber = adminChaptersCache.length > 0 ? Math.max(...adminChaptersCache.map(c => c.number)) + 1 : 1;
-    const { error } = await supabase.from('chapters').insert({ novel_id: novel.id, number: nextNumber, title, content, is_free: isFree, price });
+    const { error } = await supabase.from('chapters').insert({ novel_id: novel.id, number: nextNumber, title, content, has_image: /<img\b/i.test(content), is_free: isFree, price });
     if (error) { showToast('เพิ่มตอนไม่สำเร็จ: ' + error.message, 'error'); return; }
     showToast(`เพิ่มตอนที่ ${nextNumber} เรียบร้อยแล้ว — เพิ่มตอนถัดไปได้เลย`, 'success');
   }

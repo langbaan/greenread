@@ -1689,16 +1689,23 @@ async function moveChapterInManager(chapterId, direction) {
   const targetIndex = index + direction;
   if (index < 0 || targetIndex < 0 || targetIndex >= adminChaptersCache.length) return;
 
+  const moving = adminChaptersCache[index];
+  const target = adminChaptersCache[targetIndex];
+  const movingNumber = moving.number;
+  const targetNumber = target.number;
+  const temporaryNumber = -Math.max(1, ...adminChaptersCache.map(chapter => Number(chapter.number) || 0)) - 1;
+
+  let result = await supabase.from('chapters').update({ number: temporaryNumber }).eq('id', moving.id);
+  if (result.error) { showToast('จัดลำดับตอนไม่สำเร็จ: ' + result.error.message, 'error'); return; }
+  result = await supabase.from('chapters').update({ number: movingNumber }).eq('id', target.id);
+  if (result.error) { showToast('จัดลำดับตอนไม่สำเร็จ: ' + result.error.message, 'error'); return; }
+  result = await supabase.from('chapters').update({ number: targetNumber }).eq('id', moving.id);
+  if (result.error) { showToast('จัดลำดับตอนไม่สำเร็จ: ' + result.error.message, 'error'); return; }
+
   const reordered = [...adminChaptersCache];
   [reordered[index], reordered[targetIndex]] = [reordered[targetIndex], reordered[index]];
-  const updates = reordered.map((chapter, position) => ({ id: chapter.id, number: position + 1 }));
-  const changed = updates.filter((update, position) => adminChaptersCache[position]?.id !== update.id);
 
-  const results = await Promise.all(changed.map(update => supabase.from('chapters').update({ number: update.number }).eq('id', update.id)));
-  const error = results.find(result => result.error)?.error;
-  if (error) { showToast('จัดลำดับตอนไม่สำเร็จ: ' + error.message, 'error'); return; }
-
-  adminChaptersCache = reordered.map((chapter, position) => ({ ...chapter, number: position + 1 }));
+  adminChaptersCache = reordered.map((chapter, position) => ({ ...chapter, number: position === index ? targetNumber : position === targetIndex ? movingNumber : chapter.number }));
   renderChapterManagerList();
   await refreshNovelChapters(chapterManagerNovelId);
   showToast('จัดลำดับตอนเรียบร้อยแล้ว', 'success');

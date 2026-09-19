@@ -232,7 +232,7 @@
           </div>
         </div>
 
-        <div class="flex flex-wrap gap-1.5 mb-6" id="chapter-tabs"></div>
+        <div class="flex flex-nowrap gap-1.5 mb-6 overflow-x-auto pb-2" id="chapter-tabs" style="scrollbar-width: thin; scrollbar-color: #10b981 #ecfdf5;"></div>
 
         <div id="chapter-title" class="text-xl font-bold text-emerald-700 mb-4"></div>
 
@@ -1269,6 +1269,7 @@ function renderChapterTabs() {
       ${unlocked ? '' : icon('lock', '')}<span>${c.number}</span>
     </button>`;
   }).join('');
+  tabs.querySelector('button.bg-emerald-600')?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
 }
 
 function goToChapter(index) { currentChapterIndex = index; renderChapterTabs(); renderChapterBody(); }

@@ -474,9 +474,8 @@
         <input type="number" id="chapter-form-number-input" placeholder="เลขตอน เช่น 1 (ถ้าเว้นว่าง ระบบอ่านจากชื่อบท)" min="1" class="w-full px-4 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-400" />
         <input type="text" id="chapter-form-title" placeholder="ชื่อตอน เช่น บทที่ 4: ผจญภัยครั้งใหม่" required class="w-full px-4 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-400" />
         <div class="flex items-center gap-2 flex-wrap">
-          <button type="button" onclick="insertChapterImageFromUrl()" class="px-3 py-1.5 bg-slate-100 text-slate-600 rounded-lg text-xs font-semibold hover:bg-slate-200 flex items-center gap-1"><i data-icon="image" class="text-sm"></i><span>แทรกรูปจาก URL</span></button>
-          <button type="button" onclick="document.getElementById('chapter-form-image-file').click()" class="px-3 py-1.5 bg-slate-100 text-slate-600 rounded-lg text-xs font-semibold hover:bg-slate-200 flex items-center gap-1"><i data-icon="upload" class="text-sm"></i><span>แทรกรูปจากเครื่อง</span></button>
-          <input type="file" id="chapter-form-image-file" accept="image/*" class="hidden" onchange="handleChapterImageFileSelect(event)" />
+          <input type="url" id="chapter-form-image-url" placeholder="URL รูปประกอบตอน (ไม่บังคับ)" class="flex-1 min-w-[220px] px-3 py-1.5 border border-slate-300 rounded-lg text-sm" />
+          <select id="chapter-form-image-position" class="px-3 py-1.5 border border-slate-300 rounded-lg text-sm"><option value="before">แสดงก่อนเนื้อเรื่อง</option><option value="after">แสดงท้ายเนื้อเรื่อง</option></select>
         </div>
         <textarea id="chapter-form-content" oninput="updateChapterCharacterCount()" placeholder="เนื้อหาตอนนี้... (สามารถแทรกรูปภาพด้วยปุ่มด้านบนได้)" rows="5" required class="w-full px-4 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-400"></textarea>
         <div class="flex justify-end -mt-2"><span id="chapter-character-count" class="text-xs text-slate-500">0 ตัวอักษร</span></div>
@@ -1301,12 +1300,16 @@ async function renderChapterBody() {
     const { data, error } = await supabase.rpc('get_chapter_content', { p_chapter_id: chapter.id });
     const stillSameChapter = novels.find(n => n.id === currentReaderNovelId)?.chapters[currentChapterIndex]?.id === chapter.id;
     if (!stillSameChapter) return;
+    const imageResult = await supabase.from('chapters').select('image_url,image_position').eq('id', chapter.id).single();
+    const imageUrl = imageResult.data?.image_url || '';
+    const imageHtml = imageUrl ? `<img src="${escapeHtml(imageUrl)}" alt="ภาพประกอบ" class="max-w-full rounded-xl mx-auto my-4" loading="lazy">` : '';
     if (error) {
       contentEl.innerHTML = `<p class="text-rose-500 text-sm text-center py-8">โหลดเนื้อหาไม่สำเร็จ: ${error.message || 'กรุณาลองใหม่'}</p>`;
       console.error('get_chapter_content error:', error);
     } else {
       // Preserve pasted line breaks and paragraph spacing in plain text content.
-      contentEl.innerHTML = `<div class="whitespace-pre-wrap leading-8">${data || ''}</div>`;
+      const storyHtml = `<div class="whitespace-pre-wrap leading-8">${data || ''}</div>`;
+      contentEl.innerHTML = imageResult.data?.image_position === 'after' ? storyHtml + imageHtml : imageHtml + storyHtml;
     }
   } else {
     contentEl.classList.add('hidden');
@@ -1718,13 +1721,15 @@ async function moveChapterInManager(chapterId, direction) {
 async function editChapterInModal(chapterId) {
   const chapter = adminChaptersCache.find(c => c.id === chapterId);
   if (!chapter) return;
-  const { data, error } = await supabase.from('chapters').select('content').eq('id', chapterId).single();
+  const { data, error } = await supabase.from('chapters').select('content,image_url,image_position').eq('id', chapterId).single();
   if (error) { showToast('โหลดเนื้อหาตอนไม่สำเร็จ: ' + error.message, 'error'); return; }
   document.getElementById('chapter-form-heading').textContent = `แก้ไขตอนที่ ${chapter.number}`;
   document.getElementById('chapter-form-chapter-number').value = chapter.id;
   document.getElementById('chapter-form-number-input').value = chapter.number;
   document.getElementById('chapter-form-title').value = chapter.title;
   document.getElementById('chapter-form-content').value = data?.content || '';
+  document.getElementById('chapter-form-image-url').value = data?.image_url || '';
+  document.getElementById('chapter-form-image-position').value = data?.image_position || 'before';
   updateChapterCharacterCount();
   document.getElementById('chapter-form-free').checked = !!chapter.is_free;
   document.getElementById('chapter-form-price').value = chapter.price || 0;
@@ -1817,6 +1822,8 @@ async function saveChapterForm(e) {
   const parsedTitleNumber = title.match(/(?:บทที่|ตอนที่)\s*(\d+)/i)?.[1];
   let number = Number(numberInput.value || parsedTitleNumber);
   const content = document.getElementById('chapter-form-content').value.trim();
+  const imageUrl = document.getElementById('chapter-form-image-url').value.trim();
+  const imagePosition = document.getElementById('chapter-form-image-position').value;
   const isFree = document.getElementById('chapter-form-free').checked;
   const price = isFree ? 0 : (parseFloat(document.getElementById('chapter-form-price').value) || 0);
 
@@ -1840,15 +1847,15 @@ async function saveChapterForm(e) {
   }
 
   if (chapterId) {
-    const payload = { title, content, is_free: isFree, price };
-    if (chaptersHasImageColumn) payload.has_image = /<img\b/i.test(content);
+    const payload = { title, content, image_url: imageUrl || null, image_position: imagePosition, is_free: isFree, price };
+    if (chaptersHasImageColumn) payload.has_image = /<img\b/i.test(content) || Boolean(imageUrl);
     payload.number = number;
     const { error } = await supabase.from('chapters').update(payload).eq('id', chapterId);
     if (error) { showToast('บันทึกไม่สำเร็จ: ' + error.message, 'error'); return; }
     showToast('บันทึกการแก้ไขตอนเรียบร้อยแล้ว', 'success');
   } else {
-    const payload = { novel_id: novel.id, number, title, content, is_free: isFree, price };
-    if (chaptersHasImageColumn) payload.has_image = /<img\b/i.test(content);
+    const payload = { novel_id: novel.id, number, title, content, image_url: imageUrl || null, image_position: imagePosition, is_free: isFree, price };
+    if (chaptersHasImageColumn) payload.has_image = /<img\b/i.test(content) || Boolean(imageUrl);
     const { error } = await supabase.from('chapters').insert(payload);
     if (error) { showToast('เพิ่มตอนไม่สำเร็จ: ' + error.message, 'error'); return; }
     showToast(`บันทึกตอนที่ ${number} เรียบร้อยแล้ว`, 'success');
@@ -2274,4 +2281,3 @@ function showToast(message, type = 'info') {
 </script>
 </body>
 </html>
-

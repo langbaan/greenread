@@ -683,6 +683,7 @@ let pendingAdminRedirect = false;
 let salesOrdersCache = [];
 let purchasedChaptersCache = [];
 let adminChaptersCache = [];
+let chaptersHasImageColumn = true;
 
 let currentReaderNovelId = null;
 let currentChapterIndex = 0;
@@ -1650,7 +1651,12 @@ async function openChapterManager(novelId) {
 }
 
 async function loadAdminChaptersForNovel(novelId) {
-  const { data, error } = await supabase.from('chapters').select('id,novel_id,number,title,is_free,price,has_image,created_at').eq('novel_id', novelId).order('number');
+  let result = await supabase.from('chapters').select('id,novel_id,number,title,is_free,price,has_image,created_at').eq('novel_id', novelId).order('number');
+  if (result.error && /has_image|column .* does not exist/i.test(result.error.message || '')) {
+    chaptersHasImageColumn = false;
+    result = await supabase.from('chapters').select('id,novel_id,number,title,is_free,price,created_at').eq('novel_id', novelId).order('number');
+  }
+  const { data, error } = result;
   if (error) { showToast('โหลดตอนไม่สำเร็จ: ' + error.message, 'error'); adminChaptersCache = []; return; }
   adminChaptersCache = data || [];
 }
@@ -1799,12 +1805,16 @@ async function saveChapterForm(e) {
   const price = isFree ? 0 : (parseFloat(document.getElementById('chapter-form-price').value) || 0);
 
   if (chapterId) {
-    const { error } = await supabase.from('chapters').update({ title, content, has_image: /<img\b/i.test(content), is_free: isFree, price }).eq('id', chapterId);
+    const payload = { title, content, is_free: isFree, price };
+    if (chaptersHasImageColumn) payload.has_image = /<img\b/i.test(content);
+    const { error } = await supabase.from('chapters').update(payload).eq('id', chapterId);
     if (error) { showToast('บันทึกไม่สำเร็จ: ' + error.message, 'error'); return; }
     showToast('บันทึกการแก้ไขตอนเรียบร้อยแล้ว', 'success');
   } else {
     const nextNumber = adminChaptersCache.length > 0 ? Math.max(...adminChaptersCache.map(c => c.number)) + 1 : 1;
-    const { error } = await supabase.from('chapters').insert({ novel_id: novel.id, number: nextNumber, title, content, has_image: /<img\b/i.test(content), is_free: isFree, price });
+    const payload = { novel_id: novel.id, number: nextNumber, title, content, is_free: isFree, price };
+    if (chaptersHasImageColumn) payload.has_image = /<img\b/i.test(content);
+    const { error } = await supabase.from('chapters').insert(payload);
     if (error) { showToast('เพิ่มตอนไม่สำเร็จ: ' + error.message, 'error'); return; }
     showToast(`เพิ่มตอนที่ ${nextNumber} เรียบร้อยแล้ว — เพิ่มตอนถัดไปได้เลย`, 'success');
   }

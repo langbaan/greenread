@@ -1646,13 +1646,22 @@ async function openChapterManager(novelId) {
   cancelChapterEdit();
   await loadAdminChaptersForNovel(novelId);
   renderChapterManagerList();
+  void loadAdminChapterImageFlags(novelId);
   document.getElementById('chapter-modal').classList.remove('hidden');
 }
 
 async function loadAdminChaptersForNovel(novelId) {
   const { data, error } = await supabase.from('chapters').select('id,novel_id,number,title,is_free,price,created_at').eq('novel_id', novelId).order('number');
   if (error) { showToast('โหลดตอนไม่สำเร็จ: ' + error.message, 'error'); adminChaptersCache = []; return; }
-  adminChaptersCache = data || [];
+  adminChaptersCache = (data || []).map(chapter => ({ ...chapter, hasImage: false }));
+}
+
+async function loadAdminChapterImageFlags(novelId) {
+  const { data, error } = await supabase.from('chapters').select('id,content').eq('novel_id', novelId);
+  if (error) { console.warn('ตรวจรูปประกอบตอนไม่สำเร็จ:', error.message); return; }
+  const imageById = new Map((data || []).map(chapter => [chapter.id, /<img\b/i.test(String(chapter.content || ''))]));
+  adminChaptersCache = adminChaptersCache.map(chapter => ({ ...chapter, hasImage: imageById.get(chapter.id) === true }));
+  if (chapterManagerNovelId === novelId && !document.getElementById('chapter-modal')?.classList.contains('hidden')) renderChapterManagerList();
 }
 
 function renderChapterManagerList() {
@@ -1666,7 +1675,7 @@ function renderChapterManagerList() {
     <div class="flex items-center justify-between gap-2 p-3 bg-slate-50 rounded-xl border border-slate-100">
       <div class="min-w-0">
         <p class="font-semibold text-slate-800 text-sm truncate">ตอนที่ ${c.number}: ${c.title}</p>
-        <span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${c.is_free ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}">${c.is_free ? 'อ่านฟรี' : ((c.price || 0) + ' เหรียญ')}</span>
+        <div class="flex flex-wrap items-center gap-1"><span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${c.is_free ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}">${c.is_free ? 'อ่านฟรี' : ((c.price || 0) + ' เหรียญ')}</span>${c.hasImage ? '<span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">มีรูป</span>' : ''}</div>
       </div>
       <div class="flex gap-1 flex-shrink-0">
         <button onclick="moveChapterInManager('${c.id}', -1)" ${index === 0 ? 'disabled' : ''} class="p-2 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg text-xs disabled:opacity-40 disabled:cursor-not-allowed" title="เลื่อนตอนขึ้น">↑</button>

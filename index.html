@@ -1638,7 +1638,7 @@ async function openChapterManager(novelId) {
 }
 
 async function loadAdminChaptersForNovel(novelId) {
-  const { data, error } = await supabase.from('chapters').select('*').eq('novel_id', novelId).order('number');
+  const { data, error } = await supabase.from('chapters').select('id,novel_id,number,title,is_free,price,created_at').eq('novel_id', novelId).order('number');
   if (error) { showToast('โหลดตอนไม่สำเร็จ: ' + error.message, 'error'); adminChaptersCache = []; return; }
   adminChaptersCache = data || [];
 }
@@ -1686,13 +1686,15 @@ async function moveChapterInManager(chapterId, direction) {
   showToast('จัดลำดับตอนเรียบร้อยแล้ว', 'success');
 }
 
-function editChapterInModal(chapterId) {
+async function editChapterInModal(chapterId) {
   const chapter = adminChaptersCache.find(c => c.id === chapterId);
   if (!chapter) return;
+  const { data, error } = await supabase.from('chapters').select('content').eq('id', chapterId).single();
+  if (error) { showToast('โหลดเนื้อหาตอนไม่สำเร็จ: ' + error.message, 'error'); return; }
   document.getElementById('chapter-form-heading').textContent = `แก้ไขตอนที่ ${chapter.number}`;
   document.getElementById('chapter-form-chapter-number').value = chapter.id;
   document.getElementById('chapter-form-title').value = chapter.title;
-  document.getElementById('chapter-form-content').value = chapter.content;
+  document.getElementById('chapter-form-content').value = data?.content || '';
   updateChapterCharacterCount();
   document.getElementById('chapter-form-free').checked = !!chapter.is_free;
   document.getElementById('chapter-form-price').value = chapter.price || 0;

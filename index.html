@@ -245,6 +245,8 @@
 
         <div id="chapter-content" class="reader-prose max-w-none text-slate-700 leading-relaxed mb-8" style="font-size:16px"></div>
 
+        <div class="flex flex-nowrap gap-1.5 mb-6 overflow-x-auto pb-2 border-t pt-5" id="chapter-tabs-bottom" style="scrollbar-width: thin; scrollbar-color: #10b981 #ecfdf5;"></div>
+
         <div id="chapter-navigation" class="flex items-center justify-between border-t pt-6">
           <button id="btn-prev-chapter" onclick="navigateChapter(-1)" class="px-4 py-2 bg-slate-100 text-slate-700 rounded-xl hover:bg-slate-200 font-medium flex items-center space-x-2 disabled:opacity-40 disabled:cursor-not-allowed"><i data-icon="chevronLeft"></i><span>ตอนก่อนหน้า</span></button>
           <p id="chapter-counter" class="text-sm text-slate-600 font-medium"></p>
@@ -1262,13 +1264,16 @@ function renderChapterTabs() {
   const novel = novels.find(n => n.id === currentReaderNovelId);
   if (!novel) return;
   const tabs = document.getElementById('chapter-tabs');
-  tabs.innerHTML = novel.chapters.map((c, i) => {
+  const tabsHtml = novel.chapters.map((c, i) => {
     const unlocked = hasAccess(novel.id, c);
     const active = i === currentChapterIndex;
     return `<button onclick="goToChapter(${i})" class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1 ${active ? 'bg-emerald-600 text-white' : unlocked ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100' : 'bg-slate-100 text-slate-400 hover:bg-slate-200'}">
       ${unlocked ? '' : icon('lock', '')}<span>${c.number}</span>
     </button>`;
   }).join('');
+  tabs.innerHTML = tabsHtml;
+  const bottomTabs = document.getElementById('chapter-tabs-bottom');
+  if (bottomTabs) bottomTabs.innerHTML = tabsHtml;
   tabs.querySelector('button.bg-emerald-600')?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
 }
 

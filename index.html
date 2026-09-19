@@ -1658,7 +1658,7 @@ async function loadAdminChaptersForNovel(novelId) {
   }
   const { data, error } = result;
   if (error) { showToast('โหลดตอนไม่สำเร็จ: ' + error.message, 'error'); adminChaptersCache = []; return; }
-  adminChaptersCache = data || [];
+  adminChaptersCache = (data || []).map(chapter => ({ ...chapter, hasImage: chapter.has_image === true }));
 }
 
 function renderChapterManagerList() {

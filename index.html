@@ -1428,7 +1428,13 @@ function renderHomepageRanking() {
   const box = document.getElementById('admin-ranking-list');
   if (!box) return;
   const groups = [['free', 'อ่านฟรี'], ['best', 'ขายดี'], ['recommended', 'แนะนำ']];
-  box.innerHTML = groups.map(([tag, label]) => `<section class="rounded-2xl border border-slate-200 bg-slate-50 p-4"><h4 class="font-bold text-slate-800 mb-3">${label}</h4><div class="space-y-2">${novels.map(n => `<label class="flex items-start gap-2 bg-white rounded-xl border border-slate-100 p-2 cursor-pointer"><input type="checkbox" data-rank="${tag}" data-id="${n.id}" ${(n.homepageTags||[]).includes(tag) ? 'checked' : ''} class="mt-1"><span class="text-sm text-slate-700">${escapeHtml(n.title)}</span></label>`).join('')}</div></section>`).join('');
+  box.innerHTML = groups.map(([tag, label]) => `<section class="rounded-2xl border border-slate-200 bg-slate-50 p-4"><h4 class="font-bold text-slate-800 mb-3">${label}</h4><input type="search" placeholder="พิมพ์ค้นหาชื่อนิยาย..." oninput="filterHomepageRanking('${tag}', this.value)" class="w-full mb-3 px-3 py-2 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400"><div id="ranking-options-${tag}" class="space-y-2">${novels.map(n => `<label data-ranking-title="${escapeHtml(n.title).toLowerCase()}" class="flex items-start gap-2 bg-white rounded-xl border border-slate-100 p-2 cursor-pointer"><input type="checkbox" data-rank="${tag}" data-id="${n.id}" ${(n.homepageTags||[]).includes(tag) ? 'checked' : ''} class="mt-1"><span class="text-sm text-slate-700">${escapeHtml(n.title)}</span></label>`).join('')}</div></section>`).join('');
+}
+function filterHomepageRanking(tag, query) {
+  const keyword = String(query || '').trim().toLowerCase();
+  document.querySelectorAll(`#ranking-options-${tag} [data-ranking-title]`).forEach(item => {
+    item.classList.toggle('hidden', keyword && !item.dataset.rankingTitle.includes(keyword));
+  });
 }
 async function saveHomepageRanking() {
   const updates = novels.map(n => ({ novel: n, tags: ['free','best','recommended'].filter(t => document.querySelector(`[data-rank="${t}"][data-id="${n.id}"]`)?.checked) }));

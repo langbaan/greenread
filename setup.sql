@@ -87,6 +87,20 @@ create table if not exists public.chapters (
   unique (novel_id, number)
 );
 alter table public.chapters add column if not exists has_image boolean not null default false;
+alter table public.chapters add column if not exists image_url text;
+alter table public.chapters add column if not exists image_position text not null default 'before';
+
+insert into storage.buckets (id, name, public)
+values ('chapter-images', 'chapter-images', true)
+on conflict (id) do update set public = true;
+
+drop policy if exists "chapter_images_public_read" on storage.objects;
+create policy "chapter_images_public_read" on storage.objects
+for select using (bucket_id = 'chapter-images');
+
+drop policy if exists "chapter_images_authenticated_upload" on storage.objects;
+create policy "chapter_images_authenticated_upload" on storage.objects
+for insert to authenticated with check (bucket_id = 'chapter-images');
 update public.chapters set has_image = (content ~* '<img\b') where has_image = false;
 
 create or replace function public.sync_chapter_has_image()
@@ -94,13 +108,13 @@ returns trigger
 language plpgsql
 as $$
 begin
-  new.has_image := (new.content ~* '<img\b');
+  new.has_image := (new.content ~* '<img\b') or coalesce(new.image_url, '') <> '';
   return new;
 end;
 $$;
 drop trigger if exists chapters_sync_has_image on public.chapters;
 create trigger chapters_sync_has_image
-before insert or update of content on public.chapters
+before insert or update of content, image_url on public.chapters
 for each row execute function public.sync_chapter_has_image();
 
 create table if not exists public.coin_packages (

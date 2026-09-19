@@ -37,6 +37,15 @@ create table if not exists public.profiles (
 alter table public.profiles add column if not exists display_name text;
 alter table public.profiles add column if not exists role text not null default 'member';
 alter table public.profiles add column if not exists coins integer not null default 0;
+create table if not exists public.site_visits (id uuid primary key default gen_random_uuid(), visited_at timestamptz not null default now());
+alter table public.site_visits enable row level security;
+drop policy if exists "site_visits_insert_public" on public.site_visits;
+create policy "site_visits_insert_public" on public.site_visits for insert to anon, authenticated with check (true);
+drop policy if exists "site_visits_select_admin" on public.site_visits;
+create policy "site_visits_select_admin" on public.site_visits for select to authenticated using (public.is_admin());
+grant insert on public.site_visits to anon, authenticated;
+grant select on public.site_visits to authenticated;
+alter table public.orders add column if not exists coins_credited boolean not null default false;
 alter table public.profiles add column if not exists created_at timestamptz not null default now();
 alter table public.profiles add column if not exists updated_at timestamptz not null default now();
 
@@ -64,6 +73,7 @@ create table if not exists public.novels (
   created_at         timestamptz not null default now(),
   updated_at         timestamptz not null default now()
 );
+alter table public.novels add column if not exists homepage_tags text[] not null default '{}';
 
 create table if not exists public.chapters (
   id          uuid primary key default gen_random_uuid(),
@@ -76,6 +86,22 @@ create table if not exists public.chapters (
   created_at  timestamptz not null default now(),
   unique (novel_id, number)
 );
+alter table public.chapters add column if not exists has_image boolean not null default false;
+update public.chapters set has_image = (content ~* '<img\b') where has_image = false;
+
+create or replace function public.sync_chapter_has_image()
+returns trigger
+language plpgsql
+as $$
+begin
+  new.has_image := (new.content ~* '<img\b');
+  return new;
+end;
+$$;
+drop trigger if exists chapters_sync_has_image on public.chapters;
+create trigger chapters_sync_has_image
+before insert or update of content on public.chapters
+for each row execute function public.sync_chapter_has_image();
 
 create table if not exists public.coin_packages (
   id          uuid primary key default gen_random_uuid(),
@@ -118,6 +144,21 @@ create table if not exists public.orders (
   created_at       timestamptz not null default now(),
   paid_at          timestamptz
 );
+
+-- แบนเนอร์ประกาศ/โฆษณาหน้าเว็บ
+create table if not exists public.banners (
+  id uuid primary key default gen_random_uuid(),
+  title text not null,
+  media_type text not null default 'image' check (media_type in ('image','video')),
+  media_url text not null,
+  click_type text not null default 'text' check (click_type in ('text','link')),
+  click_value text,
+  target_page text not null default 'home' check (target_page in ('home','catalog','bookshelf')),
+  active boolean not null default true,
+  sort_order integer not null default 0,
+  created_at timestamptz not null default now()
+);
+alter table public.banners add column if not exists target_page text not null default 'home';
 
 create index if not exists idx_chapters_novel on public.chapters(novel_id);
 create index if not exists idx_purchased_user on public.purchased_chapters(user_id);
@@ -184,6 +225,20 @@ alter table public.coin_packages enable row level security;
 alter table public.liked_novels enable row level security;
 alter table public.purchased_chapters enable row level security;
 alter table public.orders enable row level security;
+alter table public.banners enable row level security;
+
+grant usage on schema public to anon, authenticated;
+grant select on public.banners to anon, authenticated;
+grant insert, update, delete on public.banners to authenticated;
+
+drop policy if exists "banners_select_active" on public.banners;
+create policy "banners_select_active" on public.banners for select using (active = true or public.is_admin());
+drop policy if exists "banners_admin_insert" on public.banners;
+create policy "banners_admin_insert" on public.banners for insert with check (public.is_admin());
+drop policy if exists "banners_admin_update" on public.banners;
+create policy "banners_admin_update" on public.banners for update using (public.is_admin()) with check (public.is_admin());
+drop policy if exists "banners_admin_delete" on public.banners;
+create policy "banners_admin_delete" on public.banners for delete using (public.is_admin());
 
 -- profiles: ผู้ใช้เห็น/แก้ได้เฉพาะแถวตัวเอง (ห้ามแก้ coins ตรงๆ — ใช้ RPC เท่านั้น), แอดมินเห็นทั้งหมด
 drop policy if exists "profiles_select_own_or_admin" on public.profiles;
@@ -409,20 +464,27 @@ declare
   v_coins integer;
   v_bonus integer;
   v_status text;
+  v_credited boolean;
 begin
-  select user_id, coins, bonus, status into v_user_id, v_coins, v_bonus, v_status
+  select user_id, coins, bonus, status, coins_credited into v_user_id, v_coins, v_bonus, v_status, v_credited
   from orders where id = p_order_id for update;
 
   if v_user_id is null then
     raise exception 'ไม่พบออเดอร์';
   end if;
 
-  if v_status = 'paid' then
+  if v_credited then
     return; -- กันเติมซ้ำ (idempotent)
   end if;
 
-  update orders set status = 'paid', paid_at = now() where id = p_order_id;
+  if v_status <> 'paid' then
+    update orders set status = 'paid', paid_at = coalesce(paid_at, now()) where id = p_order_id;
+  end if;
+  insert into profiles (id, display_name, role, coins)
+  values (v_user_id, 'สมาชิก', 'member', 0)
+  on conflict (id) do nothing;
   update profiles set coins = coins + v_coins + v_bonus, updated_at = now() where id = v_user_id;
+  update orders set coins_credited = true where id = p_order_id;
 end;
 $$;
 
@@ -433,6 +495,28 @@ $$;
 revoke execute on function public.credit_order(uuid) from public;
 revoke execute on function public.credit_order(uuid) from anon;
 revoke execute on function public.credit_order(uuid) from authenticated;
+
+create or replace function public.admin_find_coin_orders(p_email text)
+returns table(id uuid, user_id uuid, coins integer, bonus integer, amount numeric, status text, created_at timestamptz, coins_credited boolean)
+language plpgsql security definer set search_path = public, auth
+as $$
+begin
+  if not public.is_admin() then raise exception 'ไม่มีสิทธิ์แอดมิน'; end if;
+  return query select o.id, o.user_id, o.coins, o.bonus, o.amount, o.status, o.created_at, o.coins_credited
+  from public.orders o join auth.users u on u.id=o.user_id
+  where lower(u.email)=lower(trim(p_email)) order by o.created_at desc;
+end; $$;
+
+create or replace function public.admin_credit_order(p_order_id uuid)
+returns void language plpgsql security definer set search_path = public
+as $$ begin
+  if not public.is_admin() then raise exception 'ไม่มีสิทธิ์แอดมิน'; end if;
+  perform public.credit_order(p_order_id);
+end; $$;
+revoke execute on function public.admin_find_coin_orders(text) from public;
+grant execute on function public.admin_find_coin_orders(text) to authenticated;
+revoke execute on function public.admin_credit_order(uuid) from public;
+grant execute on function public.admin_credit_order(uuid) to authenticated;
 
 -- ---------------------------------------------------------
 -- 6) SEED DATA (ตัวอย่าง coin packages — แก้ไข/เพิ่มได้ในหน้าแอดมิน)

@@ -474,6 +474,10 @@
         <input type="number" id="chapter-form-number-input" placeholder="เลขตอน เช่น 1 (ถ้าเว้นว่าง ระบบอ่านจากชื่อบท)" min="1" class="w-full px-4 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-400" />
         <input type="text" id="chapter-form-title" placeholder="ชื่อตอน เช่น บทที่ 4: ผจญภัยครั้งใหม่" required class="w-full px-4 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-400" />
         <div class="grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_auto] gap-2">
+          <input type="url" id="chapter-inline-image-url" placeholder="URL รูปที่จะแทรกในเนื้อหา" class="w-full min-w-0 px-3 py-2 border border-blue-200 rounded-lg text-sm" />
+          <button type="button" onclick="insertChapterInlineImage()" class="w-full sm:w-auto px-4 py-2 bg-blue-50 text-blue-700 rounded-lg text-xs font-semibold whitespace-nowrap">แทรกในเนื้อหา</button>
+          <button type="button" onclick="document.getElementById('chapter-inline-image-file').click()" class="w-full sm:w-auto px-4 py-2 bg-blue-50 text-blue-700 rounded-lg text-xs font-semibold whitespace-nowrap">อัปโหลดรูปแทรก</button>
+          <input type="file" id="chapter-inline-image-file" accept="image/*" class="hidden" onchange="uploadChapterInlineImage(event)" />
           <input type="url" id="chapter-form-image-url" placeholder="URL รูปประกอบตอน (ไม่บังคับ)" class="w-full min-w-0 px-3 py-2 border border-slate-300 rounded-lg text-sm" />
           <button type="button" onclick="document.getElementById('chapter-form-image-file').click()" class="w-full sm:w-auto px-4 py-2 bg-slate-100 text-slate-600 rounded-lg text-xs font-semibold whitespace-nowrap">อัปโหลดจากเครื่อง</button>
           <input type="file" id="chapter-form-image-file" accept="image/*" class="hidden" onchange="handleChapterImageFileSelect(event)" />
@@ -1808,6 +1812,32 @@ function insertChapterImageFromUrl() {
   const url = prompt('วางลิงก์ URL ของรูปภาพที่ต้องการแทรก:');
   if (!url || !url.trim()) return;
   insertImageAtCursor(`<img src="${url.trim()}" alt="ภาพประกอบ" style="max-width:100%;border-radius:12px;margin:8px 0;">`);
+}
+
+function insertChapterInlineImage() {
+  const input = document.getElementById('chapter-inline-image-url');
+  const url = input.value.trim();
+  if (!url) { input.focus(); showToast('กรุณาใส่ URL รูปภาพก่อน', 'warning'); return; }
+  insertImageAtCursor(`<img src="${escapeHtml(url)}" alt="ภาพประกอบ" style="max-width:100%;border-radius:12px;margin:8px 0;">`);
+  input.value = '';
+  showToast('แทรกรูปในเนื้อหาแล้ว', 'success');
+}
+
+async function uploadChapterInlineImage(e) {
+  const file = e.target.files[0];
+  e.target.value = '';
+  if (!file) return;
+  if (!file.type.startsWith('image/')) { showToast('กรุณาเลือกไฟล์รูปภาพเท่านั้น', 'warning'); return; }
+  if (file.size > 3 * 1024 * 1024) { showToast('ไฟล์รูปใหญ่เกินไป (จำกัด 3MB)', 'warning'); return; }
+  const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+  const path = `inline/${crypto.randomUUID()}-${safeName}`;
+  showToast('กำลังอัปโหลดรูปภาพ...', 'info');
+  const { error } = await supabase.storage.from('chapter-images').upload(path, file, { contentType: file.type, upsert: false });
+  if (error) { showToast('อัปโหลดรูปไม่สำเร็จ: ' + error.message, 'error'); return; }
+  const { data } = supabase.storage.from('chapter-images').getPublicUrl(path);
+  const input = document.getElementById('chapter-inline-image-url');
+  input.value = data.publicUrl;
+  insertChapterInlineImage();
 }
 
 function handleChapterImageFileSelect(e) {

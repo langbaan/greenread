@@ -1374,6 +1374,12 @@ function switchAdminTab(tab) {
     else { btn.classList.remove('text-emerald-600', 'border-emerald-600'); btn.classList.add('text-slate-600', 'border-transparent'); content.classList.add('hidden'); }
   });
   if (tab === 'stats') initSalesStats();
+  if (tab === 'novels') {
+    renderAdminNovelsTable();
+    void refreshAllChaptersMeta().then(() => {
+      if (!document.getElementById('admin-novels-content')?.classList.contains('hidden')) renderAdminNovelsTable();
+    });
+  }
   if (tab === 'web') loadBanners();
   if (tab === 'ranking') renderHomepageRanking();
 }

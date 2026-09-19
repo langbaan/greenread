@@ -313,7 +313,7 @@
         </table>
       </div>
     </div>
-    <div id="admin-ranking-content" class="hidden space-y-4"><div class="bg-white p-6 rounded-2xl border border-slate-200"><h3 class="text-lg font-bold mb-3">จัดนิยายขึ้นหน้าแรก</h3><p class="text-sm text-slate-500 mb-4">เลือกนิยายใส่ได้ 3 หัวข้อ และเพิ่มจำนวนเรื่องได้ไม่จำกัด</p><div id="admin-ranking-list" class="grid grid-cols-1 lg:grid-cols-3 gap-4"></div><button onclick="saveHomepageRanking()" class="mt-4 px-5 py-2 bg-emerald-600 text-white rounded-xl font-semibold">บันทึกการจัดอันดับ</button></div></div>
+    <div id="admin-ranking-content" class="hidden space-y-4"><div class="bg-white p-6 rounded-2xl border border-slate-200"><h3 class="text-lg font-bold mb-3">จัดนิยายขึ้นหน้าแรก</h3><p class="text-sm text-slate-500 mb-4">เลือกนิยายใส่ได้ 3 หัวข้อ และเพิ่มจำนวนเรื่องได้ไม่จำกัด</p><button onclick="saveHomepageRanking()" class="mb-4 px-5 py-2 bg-emerald-600 text-white rounded-xl font-semibold">บันทึกการจัดอันดับ</button><div id="admin-ranking-list" class="grid grid-cols-1 lg:grid-cols-3 gap-4"></div></div></div>
 
     <div id="admin-web-content" class="hidden space-y-4">
       <div class="bg-white p-6 rounded-2xl border border-slate-200 space-y-3">
@@ -411,8 +411,8 @@
 </div>
 
 <!-- NOVEL MODAL -->
-<div id="novel-modal" class="modal-backdrop hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 overflow-y-auto">
-  <div class="bg-white rounded-3xl max-w-2xl w-full p-8 shadow-2xl my-8">
+<div id="novel-modal" class="modal-backdrop hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 overflow-hidden">
+  <div class="bg-white rounded-3xl max-w-2xl w-full max-h-[95vh] p-8 shadow-2xl my-8 overflow-y-auto">
     <div class="sticky top-0 z-10 flex justify-between items-center mb-6 py-1 bg-white"><h2 id="modal-title" class="text-2xl font-bold text-slate-800">เพิ่มนิยายเรื่องใหม่</h2><button onclick="closeModal('novel-modal')" class="text-slate-400 hover:text-slate-600 text-2xl"><i data-icon="close"></i></button></div>
     <form id="novel-form" onsubmit="saveNovelForm(event)" class="space-y-4">
       <input type="hidden" id="form-novel-id" />
@@ -465,7 +465,7 @@
       <button onclick="closeModal('chapter-modal')" class="text-slate-400 hover:text-slate-600 text-2xl"><i data-icon="close"></i></button>
     </div>
 
-    <div class="min-h-0 max-h-[38vh] lg:max-h-none overflow-y-auto pr-2 lg:border-r lg:border-slate-200 lg:pr-6">
+    <div class="min-h-0 h-[35vh] lg:h-auto max-h-[38vh] lg:max-h-none overflow-y-auto overscroll-contain pr-2 lg:border-r lg:border-slate-200 lg:pr-6">
       <h3 class="text-lg font-bold text-slate-700 mb-3">รายการตอน</h3>
       <div id="chapter-manager-list" class="space-y-2"></div>
     </div>
@@ -1428,7 +1428,7 @@ function renderHomepageRanking() {
   const box = document.getElementById('admin-ranking-list');
   if (!box) return;
   const groups = [['free', 'อ่านฟรี'], ['best', 'ขายดี'], ['recommended', 'แนะนำ']];
-  box.innerHTML = groups.map(([tag, label]) => `<section class="rounded-2xl border border-slate-200 bg-slate-50 p-4"><h4 class="font-bold text-slate-800 mb-3">${label}</h4><input type="search" placeholder="พิมพ์ค้นหาชื่อนิยาย..." oninput="filterHomepageRanking('${tag}', this.value)" class="w-full mb-3 px-3 py-2 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400"><div id="ranking-options-${tag}" class="space-y-2">${novels.map(n => `<label data-ranking-title="${escapeHtml(n.title).toLowerCase()}" class="flex items-start gap-2 bg-white rounded-xl border border-slate-100 p-2 cursor-pointer"><input type="checkbox" data-rank="${tag}" data-id="${n.id}" ${(n.homepageTags||[]).includes(tag) ? 'checked' : ''} class="mt-1"><span class="text-sm text-slate-700">${escapeHtml(n.title)}</span></label>`).join('')}</div></section>`).join('');
+  box.innerHTML = groups.map(([tag, label]) => `<section class="rounded-2xl border border-slate-200 bg-slate-50 p-4"><h4 class="font-bold text-slate-800 mb-3">${label}</h4><input type="search" placeholder="พิมพ์ค้นหาชื่อนิยาย..." oninput="filterHomepageRanking('${tag}', this.value)" class="w-full mb-3 px-3 py-2 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400"><div id="ranking-options-${tag}" class="space-y-2 max-h-72 lg:max-h-96 overflow-y-auto pr-1">${novels.map(n => `<label data-ranking-title="${escapeHtml(n.title).toLowerCase()}" class="flex items-start gap-2 bg-white rounded-xl border border-slate-100 p-2 cursor-pointer"><input type="checkbox" data-rank="${tag}" data-id="${n.id}" ${(n.homepageTags||[]).includes(tag) ? 'checked' : ''} class="mt-1"><span class="text-sm text-slate-700">${escapeHtml(n.title)}</span></label>`).join('')}</div></section>`).join('');
 }
 function filterHomepageRanking(tag, query) {
   const keyword = String(query || '').trim().toLowerCase();

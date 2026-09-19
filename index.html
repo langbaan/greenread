@@ -495,7 +495,10 @@
               <button type="button" onclick="document.getElementById('chapter-form-image-file').click()" class="px-4 py-2 bg-white text-slate-700 border border-slate-300 rounded-lg text-xs font-semibold">อัปโหลดรูปจากเครื่อง</button>
               <input type="file" id="chapter-form-image-file" accept="image/*" class="hidden" onchange="handleChapterImageFileSelect(event)" />
               <select id="chapter-form-image-position" class="sm:col-span-2 w-full px-3 py-2 border border-slate-300 rounded-lg text-sm"><option value="before">แสดงก่อนเนื้อเรื่อง</option><option value="after">แสดงท้ายเนื้อเรื่อง</option></select>
-              <img id="chapter-form-image-preview" class="hidden w-16 h-16 object-cover rounded-lg border" alt="ตัวอย่างรูปประกอบ" />
+              <div id="chapter-form-image-preview-wrap" class="hidden flex items-center gap-2">
+                <img id="chapter-form-image-preview" class="w-16 h-16 object-cover rounded-lg border" alt="ตัวอย่างรูปประกอบ" />
+                <button type="button" onclick="removeChapterImage()" class="px-3 py-2 bg-red-50 text-red-600 border border-red-100 rounded-lg text-xs font-semibold hover:bg-red-100">ลบรูป</button>
+              </div>
             </div>
           </div>
         </div>
@@ -1755,7 +1758,7 @@ async function editChapterInModal(chapterId) {
   pendingChapterImageDataUri = null;
   const imagePreview = document.getElementById('chapter-form-image-preview');
   imagePreview.src = data?.image_url || '';
-  imagePreview.classList.toggle('hidden', !data?.image_url);
+  document.getElementById('chapter-form-image-preview-wrap').classList.toggle('hidden', !data?.image_url);
   document.getElementById('chapter-form-image-position').value = data?.image_position || 'before';
   updateChapterCharacterCount();
   document.getElementById('chapter-form-free').checked = !!chapter.is_free;
@@ -1770,7 +1773,9 @@ function cancelChapterEdit() {
   if (form) form.reset();
   pendingChapterImageDataUri = null;
   const imagePreview = document.getElementById('chapter-form-image-preview');
-  if (imagePreview) { imagePreview.src = ''; imagePreview.classList.add('hidden'); }
+  if (imagePreview) imagePreview.src = '';
+  const imagePreviewWrap = document.getElementById('chapter-form-image-preview-wrap');
+  if (imagePreviewWrap) imagePreviewWrap.classList.add('hidden');
   updateChapterCharacterCount();
   document.getElementById('chapter-form-chapter-number').value = '';
   document.getElementById('chapter-form-number-input').value = '';
@@ -1864,11 +1869,22 @@ function handleChapterImageFileSelect(e) {
     document.getElementById('chapter-form-image-url').value = '';
     const preview = document.getElementById('chapter-form-image-preview');
     preview.src = pendingChapterImageDataUri;
-    preview.classList.remove('hidden');
+    document.getElementById('chapter-form-image-preview-wrap').classList.remove('hidden');
     showToast('เลือกรูปประกอบตอนแล้ว', 'success');
   };
   reader.readAsDataURL(file);
   e.target.value = '';
+}
+
+function removeChapterImage() {
+  pendingChapterImageDataUri = null;
+  document.getElementById('chapter-form-image-url').value = '';
+  document.getElementById('chapter-form-image-file').value = '';
+  const preview = document.getElementById('chapter-form-image-preview');
+  const previewWrap = document.getElementById('chapter-form-image-preview-wrap');
+  if (preview) preview.src = '';
+  if (previewWrap) previewWrap.classList.add('hidden');
+  showToast('ลบรูปประกอบตอนแล้ว กดบันทึกเพื่อยืนยัน', 'success');
 }
 
 async function saveChapterForm(e) {

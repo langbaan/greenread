@@ -59,11 +59,11 @@
   .icon-svg { width: 1em; height: 1em; vertical-align: -0.125em; flex-shrink: 0; }
   .nav-btn { white-space: nowrap; }
   /* Homepage recommendation carousels use the same card proportions as catalog-grid. */
-  #free-grid > div, #best-grid > div, #featured-grid > div { flex: 0 0 100%; min-width: 0; scroll-snap-align: start; }
-  #free-grid, #best-grid, #featured-grid { scrollbar-width: thin; scrollbar-color: #10b981 #ecfdf5; }
-  @media (min-width: 640px) { #free-grid > div, #best-grid > div, #featured-grid > div { flex-basis: calc((100% - 1.5rem) / 2); } }
-  @media (min-width: 1024px) { #free-grid > div, #best-grid > div, #featured-grid > div { flex-basis: calc((100% - 3rem) / 3); } }
-  @media (min-width: 1280px) { #free-grid > div, #best-grid > div, #featured-grid > div { flex-basis: calc((100% - 4.5rem) / 4); } }
+  #free-grid > div, #hot-grid > div, #new-grid > div { flex: 0 0 100%; min-width: 0; scroll-snap-align: start; }
+  #free-grid, #hot-grid, #new-grid { scrollbar-width: thin; scrollbar-color: #10b981 #ecfdf5; }
+  @media (min-width: 640px) { #free-grid > div, #hot-grid > div, #new-grid > div { flex-basis: calc((100% - 1.5rem) / 2); } }
+  @media (min-width: 1024px) { #free-grid > div, #hot-grid > div, #new-grid > div { flex-basis: calc((100% - 3rem) / 3); } }
+  @media (min-width: 1280px) { #free-grid > div, #hot-grid > div, #new-grid > div { flex-basis: calc((100% - 4.5rem) / 4); } }
   @media (max-width: 900px) {
     header .nav-desktop { display: none !important; }
     header .mobile-menu-toggle-btn { display: block !important; }
@@ -160,9 +160,9 @@
 
     <div>
       <div class="flex items-center justify-between mb-4">
-        <h2 class="text-xl font-bold text-slate-800 flex items-center space-x-2"><i data-icon="trending" class="text-emerald-600"></i><span>นิยายแนะนำ</span></h2>
+        <h2 class="text-2xl md:text-3xl font-extrabold text-slate-900 flex items-center space-x-2"><i data-icon="trending" class="text-emerald-600"></i><span>นิยายคัดสรร</span></h2>
       </div>
-      <div id="homepage-free-section" class="hidden mb-8"><h3 class="text-lg font-bold mb-3">อ่านฟรี</h3><div id="free-grid" class="flex gap-6 overflow-x-auto pb-3 snap-x snap-mandatory"></div></div><div id="homepage-best-section" class="hidden mb-8"><h3 class="text-lg font-bold mb-3">ขายดี</h3><div id="best-grid" class="flex gap-6 overflow-x-auto pb-3 snap-x snap-mandatory"></div></div><div id="homepage-recommended-section"><h3 class="text-lg font-bold mb-3">แนะนำ</h3><div id="featured-grid" class="flex gap-6 overflow-x-auto pb-3 snap-x snap-mandatory"></div></div>
+      <div id="homepage-hot-section" class="hidden mb-8"><h3 class="text-2xl md:text-3xl font-extrabold text-emerald-800 border-l-4 border-emerald-500 pl-3 mb-4">นิยายมาแรง</h3><div id="hot-grid" class="flex gap-6 overflow-x-auto pb-3 snap-x snap-mandatory"></div></div><div id="homepage-new-section" class="hidden mb-8"><h3 class="text-2xl md:text-3xl font-extrabold text-emerald-800 border-l-4 border-emerald-500 pl-3 mb-4">นิยายใหม่</h3><div id="new-grid" class="flex gap-6 overflow-x-auto pb-3 snap-x snap-mandatory"></div></div><div id="homepage-free-section" class="hidden mb-8"><h3 class="text-2xl md:text-3xl font-extrabold text-emerald-800 border-l-4 border-emerald-500 pl-3 mb-4">นิยายอ่านฟรี</h3><div id="free-grid" class="flex gap-6 overflow-x-auto pb-3 snap-x snap-mandatory"></div></div>
       <p id="home-empty" class="hidden text-center text-slate-400 py-12"><i data-icon="inbox" class="text-3xl mb-2 block"></i>ยังไม่มีนิยายในระบบตอนนี้</p>
     </div>
   </section>
@@ -313,7 +313,7 @@
         </table>
       </div>
     </div>
-    <div id="admin-ranking-content" class="hidden space-y-4"><div class="bg-white p-6 rounded-2xl border border-slate-200"><h3 class="text-lg font-bold mb-3">จัดนิยายขึ้นหน้าแรก</h3><p class="text-sm text-slate-500 mb-4">เลือกนิยายใส่ได้ 3 หัวข้อ และเพิ่มจำนวนเรื่องได้ไม่จำกัด</p><button onclick="saveHomepageRanking()" class="mb-4 px-5 py-2 bg-emerald-600 text-white rounded-xl font-semibold">บันทึกการจัดอันดับ</button><div id="admin-ranking-list" class="grid grid-cols-1 lg:grid-cols-3 gap-4"></div></div></div>
+    <div id="admin-ranking-content" class="hidden space-y-4"><div class="bg-white p-6 rounded-2xl border border-slate-200"><h3 class="text-2xl font-extrabold text-slate-900 mb-3">จัดนิยายขึ้นหน้าแรก</h3><p class="text-sm text-slate-500 mb-4">เลือกนิยายใส่ได้ 3 หัวข้อ และเพิ่มจำนวนเรื่องได้ไม่จำกัด</p><button onclick="saveHomepageRanking()" class="mb-4 px-5 py-2 bg-emerald-600 text-white rounded-xl font-semibold">บันทึกการจัดอันดับ</button><div id="admin-ranking-list" class="grid grid-cols-1 lg:grid-cols-3 gap-4"></div></div></div>
 
     <div id="admin-web-content" class="hidden space-y-4">
       <div class="bg-white p-6 rounded-2xl border border-slate-200 space-y-3">
@@ -756,7 +756,7 @@ async function loadNovels() {
     pricePerChapter: Number(n.price_per_chapter) || 0,
     rating: Number(n.rating) || 0, viewCount: n.view_count || 0,
     status: n.status, cover: n.cover_url || createPlaceholderCoverDataUri(n.genre),
-     synopsis: n.synopsis || '', homepageTags: n.homepage_tags || [], chapters: [], chaptersLoaded: false
+     synopsis: n.synopsis || '', homepageTags: (n.homepage_tags || []).map(tag => tag === 'best' ? 'hot' : tag === 'recommended' ? 'new' : tag), chapters: [], chaptersLoaded: false
   }));
   if (novels.length === 0) {
     showDiagnostic(
@@ -1080,9 +1080,8 @@ function renderHome() {
   `).join('');
 
   const tagged = tag => novels.filter(n => (n.homepageTags || []).includes(tag));
-  const free = tagged('free'), best = tagged('best'), featured = tagged('recommended').length ? tagged('recommended') : [...novels].sort((a,b) => b.rating-a.rating).slice(0,4);
-  [['free',free],['best',best],['featured',featured]].forEach(([id,items]) => { const grid=document.getElementById(`${id}-grid`); if(grid) grid.innerHTML=items.map(createNovelCardHTML).join(''); });
-  document.getElementById('homepage-free-section').classList.toggle('hidden', !free.length); document.getElementById('homepage-best-section').classList.toggle('hidden', !best.length);
+  const hot = tagged('hot'), fresh = tagged('new'), free = tagged('free');
+  [['hot',hot],['new',fresh],['free',free]].forEach(([id,items]) => { const grid=document.getElementById(`${id}-grid`); const section=document.getElementById(`homepage-${id}-section`); if(grid) grid.innerHTML=items.map(createNovelCardHTML).join(''); if(section) section.classList.toggle('hidden', items.length === 0); });
   document.getElementById('home-empty').classList.toggle('hidden', novels.length > 0);
 }
 
@@ -1427,7 +1426,7 @@ async function adminCreditOrder(orderId) { if(!confirm('ยืนยันเต
 function renderHomepageRanking() {
   const box = document.getElementById('admin-ranking-list');
   if (!box) return;
-  const groups = [['free', 'อ่านฟรี'], ['best', 'ขายดี'], ['recommended', 'แนะนำ']];
+  const groups = [['hot', 'นิยายมาแรง'], ['new', 'นิยายใหม่'], ['free', 'นิยายอ่านฟรี']];
   box.innerHTML = groups.map(([tag, label]) => `<section class="rounded-2xl border border-slate-200 bg-slate-50 p-4"><h4 class="font-bold text-slate-800 mb-3">${label}</h4><input type="search" placeholder="พิมพ์ค้นหาชื่อนิยาย..." oninput="filterHomepageRanking('${tag}', this.value)" class="w-full mb-3 px-3 py-2 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400"><div id="ranking-options-${tag}" class="space-y-2 max-h-72 lg:max-h-96 overflow-y-auto pr-1">${novels.map(n => `<label data-ranking-title="${escapeHtml(n.title).toLowerCase()}" class="flex items-start gap-2 bg-white rounded-xl border border-slate-100 p-2 cursor-pointer"><input type="checkbox" data-rank="${tag}" data-id="${n.id}" ${(n.homepageTags||[]).includes(tag) ? 'checked' : ''} class="mt-1"><span class="text-sm text-slate-700">${escapeHtml(n.title)}</span></label>`).join('')}</div></section>`).join('');
 }
 function filterHomepageRanking(tag, query) {
@@ -1437,7 +1436,7 @@ function filterHomepageRanking(tag, query) {
   });
 }
 async function saveHomepageRanking() {
-  const updates = novels.map(n => ({ novel: n, tags: ['free','best','recommended'].filter(t => document.querySelector(`[data-rank="${t}"][data-id="${n.id}"]`)?.checked) }));
+  const updates = novels.map(n => ({ novel: n, tags: ['hot','new','free'].filter(t => document.querySelector(`[data-rank="${t}"][data-id="${n.id}"]`)?.checked) }));
   const results = await Promise.all(updates.map(({ novel, tags }) => supabase.from('novels').update({ homepage_tags: tags }).eq('id', novel.id)));
   const error = results.find(result => result.error)?.error;
   if (error) { showToast('บันทึกอันดับไม่สำเร็จ: ' + error.message, 'error'); return; }

@@ -411,7 +411,7 @@
 <!-- NOVEL MODAL -->
 <div id="novel-modal" class="modal-backdrop hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 overflow-y-auto">
   <div class="bg-white rounded-3xl max-w-2xl w-full p-8 shadow-2xl my-8">
-    <div class="flex justify-between items-center mb-6"><h2 id="modal-title" class="text-2xl font-bold text-slate-800">เพิ่มนิยายเรื่องใหม่</h2><button onclick="closeModal('novel-modal')" class="text-slate-400 hover:text-slate-600 text-2xl"><i data-icon="close"></i></button></div>
+    <div class="sticky top-0 z-10 flex justify-between items-center mb-6 py-1 bg-white"><h2 id="modal-title" class="text-2xl font-bold text-slate-800">เพิ่มนิยายเรื่องใหม่</h2><button onclick="closeModal('novel-modal')" class="text-slate-400 hover:text-slate-600 text-2xl"><i data-icon="close"></i></button></div>
     <form id="novel-form" onsubmit="saveNovelForm(event)" class="space-y-4">
       <input type="hidden" id="form-novel-id" />
       <div class="grid grid-cols-2 gap-4">
@@ -739,9 +739,9 @@ async function loadNovels() {
   } else {
     clearDiagnostic();
   }
-  await refreshAllChaptersMeta();
-  document.getElementById('home-loading-indicator')?.classList.add('hidden');
   renderHome();
+  document.getElementById('home-loading-indicator')?.classList.add('hidden');
+  void refreshAllChaptersMeta().then(() => refreshCurrentPageData());
 }
 
 async function refreshAllChaptersMeta() {
@@ -948,7 +948,9 @@ function initAuthListener() {
       isAdmin = false;
       likedNovelIds = new Set();
     }
-    await refreshAllChaptersMeta();
+    // loadNovels() already loads chapter metadata during the initial boot.
+    // Refresh only after a later auth change so the first render is not delayed.
+    if (novels.length) await refreshAllChaptersMeta();
     updateAuthUI();
     updateCoinsDisplay();
     updateAdminUIState();
@@ -1380,7 +1382,15 @@ async function searchAdminOrders() { const email=document.getElementById('admin-
 async function adminCreditOrder(orderId) { if(!confirm('ยืนยันเติมเหรียญให้ออเดอร์นี้?'))return; const {error}=await supabase.rpc('admin_credit_order',{p_order_id:orderId}); if(error)return showToast(error.message,'error'); showToast('เติมเหรียญเรียบร้อยแล้ว','success'); searchAdminOrders(); }
 
 function renderHomepageRanking() { const box=document.getElementById('admin-ranking-list'); if(!box) return; box.innerHTML=novels.map(n=>`<div class="flex flex-wrap items-center gap-3 border-b py-2"><b class="flex-1">${n.title}</b><label><input type="checkbox" data-rank="free" data-id="${n.id}" ${(n.homepageTags||[]).includes('free')?'checked':''}> อ่านฟรี</label><label><input type="checkbox" data-rank="best" data-id="${n.id}" ${(n.homepageTags||[]).includes('best')?'checked':''}> ขายดี</label><label><input type="checkbox" data-rank="recommended" data-id="${n.id}" ${(n.homepageTags||[]).includes('recommended')?'checked':''}> แนะนำ</label></div>`).join(''); }
-async function saveHomepageRanking() { for (const n of novels) { const tags=['free','best','recommended'].filter(t=>document.querySelector(`[data-rank="${t}"][data-id="${n.id}"]`)?.checked); const {error}=await supabase.from('novels').update({homepage_tags:tags}).eq('id',n.id); if(error){showToast('บันทึกอันดับไม่สำเร็จ: '+error.message,'error');return;} n.homepageTags=tags; } renderHome(); showToast('บันทึกการจัดอันดับสำเร็จ','success'); }
+async function saveHomepageRanking() {
+  const updates = novels.map(n => ({ novel: n, tags: ['free','best','recommended'].filter(t => document.querySelector(`[data-rank="${t}"][data-id="${n.id}"]`)?.checked) }));
+  const results = await Promise.all(updates.map(({ novel, tags }) => supabase.from('novels').update({ homepage_tags: tags }).eq('id', novel.id)));
+  const error = results.find(result => result.error)?.error;
+  if (error) { showToast('บันทึกอันดับไม่สำเร็จ: ' + error.message, 'error'); return; }
+  updates.forEach(({ novel, tags }) => { novel.homepageTags = tags; });
+  renderHome();
+  showToast('บันทึกการจัดอันดับสำเร็จ', 'success');
+}
 
 function filterAdminNovels() {
   const q = (document.getElementById('admin-novel-search')?.value || '').toLowerCase().trim();
@@ -1464,6 +1474,8 @@ function renderAdminNovelsTable() {
 function openNovelModal(novelId = null) {
   const modal = document.getElementById('novel-modal');
   const title = document.getElementById('modal-title');
+  modal.scrollTop = 0;
+  modal.querySelector(':scope > div')?.scrollTo(0, 0);
   document.getElementById('novel-form').reset();
   populateNovelAuthorOptions();
   populateNovelGenreOptions();

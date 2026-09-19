@@ -1652,13 +1652,16 @@ async function openChapterManager(novelId) {
 }
 
 async function loadAdminChaptersForNovel(novelId) {
+  let usedHasImageColumn = true;
   let result = await supabase.from('chapters').select('id,novel_id,number,title,is_free,price,has_image,created_at').eq('novel_id', novelId).order('number');
   if (result.error && /has_image|column .* does not exist/i.test(result.error.message || '')) {
+    usedHasImageColumn = false;
     chaptersHasImageColumn = false;
     result = await supabase.from('chapters').select('id,novel_id,number,title,is_free,price,created_at').eq('novel_id', novelId).order('number');
   }
   const { data, error } = result;
   if (error) { showToast('โหลดตอนไม่สำเร็จ: ' + error.message, 'error'); adminChaptersCache = []; return; }
+  chaptersHasImageColumn = usedHasImageColumn;
   adminChaptersCache = (data || []).map(chapter => ({ ...chapter, hasImage: chapter.has_image === true }));
 }
 
@@ -1812,12 +1815,29 @@ async function saveChapterForm(e) {
   const numberInput = document.getElementById('chapter-form-number-input');
   const title = document.getElementById('chapter-form-title').value.trim();
   const parsedTitleNumber = title.match(/(?:บทที่|ตอนที่)\s*(\d+)/i)?.[1];
-  const number = Number(numberInput.value || parsedTitleNumber);
+  let number = Number(numberInput.value || parsedTitleNumber);
   const content = document.getElementById('chapter-form-content').value.trim();
   const isFree = document.getElementById('chapter-form-free').checked;
   const price = isFree ? 0 : (parseFloat(document.getElementById('chapter-form-price').value) || 0);
 
-  if (!Number.isInteger(number) || number < 1) { showToast('กรุณาระบุเลขตอนให้ถูกต้อง', 'warning'); numberInput.focus(); return; }
+  if (!Number.isInteger(number) || number < 1) {
+    const usedNumbers = new Set(adminChaptersCache.map(chapter => Number(chapter.number)).filter(Number.isFinite));
+    number = 1;
+    while (usedNumbers.has(number)) number += 1;
+  }
+
+  if (!chapterId) {
+    const usedNumbers = new Set(adminChaptersCache.map(chapter => Number(chapter.number)).filter(Number.isFinite));
+    if (usedNumbers.has(number)) {
+      number = 1;
+      while (usedNumbers.has(number)) number += 1;
+      showToast(`เลขตอนเดิมซ้ำ ระบบใช้เลขว่าง ${number} ให้อัตโนมัติ`, 'info');
+    }
+  } else if (adminChaptersCache.some(chapter => chapter.id !== chapterId && Number(chapter.number) === number)) {
+    showToast('เลขตอนนี้ถูกใช้งานแล้ว กรุณาใช้เลขอื่น', 'warning');
+    numberInput.focus();
+    return;
+  }
 
   if (chapterId) {
     const payload = { title, content, is_free: isFree, price };
@@ -2254,3 +2274,4 @@ function showToast(message, type = 'info') {
 </script>
 </body>
 </html>
+

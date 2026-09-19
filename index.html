@@ -727,7 +727,7 @@ async function loadNovels() {
     pricePerChapter: Number(n.price_per_chapter) || 0,
     rating: Number(n.rating) || 0, viewCount: n.view_count || 0,
     status: n.status, cover: n.cover_url || createPlaceholderCoverDataUri(n.genre),
-     synopsis: n.synopsis || '', homepageTags: n.homepage_tags || [], chapters: []
+     synopsis: n.synopsis || '', homepageTags: n.homepage_tags || [], chapters: [], chaptersLoaded: false
   }));
   if (novels.length === 0) {
     showDiagnostic(
@@ -741,7 +741,6 @@ async function loadNovels() {
   }
   renderHome();
   document.getElementById('home-loading-indicator')?.classList.add('hidden');
-  void refreshAllChaptersMeta().then(() => refreshCurrentPageData());
 }
 
 async function refreshAllChaptersMeta() {
@@ -771,6 +770,7 @@ async function refreshNovelChapters(novelId) {
   if (!novel) return;
   novel.chapters = (data || []).map(c => ({ id: c.id, number: c.number, title: c.title, isFree: c.is_free, price: Number(c.price) || 0, unlocked: c.unlocked }))
     .sort((a, b) => a.number - b.number);
+  novel.chaptersLoaded = true;
 }
 
 async function loadCoinPackages() {
@@ -948,9 +948,6 @@ function initAuthListener() {
       isAdmin = false;
       likedNovelIds = new Set();
     }
-    // loadNovels() already loads chapter metadata during the initial boot.
-    // Refresh only after a later auth change so the first render is not delayed.
-    if (novels.length) await refreshAllChaptersMeta();
     updateAuthUI();
     updateCoinsDisplay();
     updateAdminUIState();
@@ -1028,6 +1025,7 @@ function updateAdminUIState() {
 }
 
 function getNovelPriceInfo(novel) {
+  if (!novel.chaptersLoaded) return { label: 'ดูรายละเอียด', min: 0, max: 0, allFree: false };
   if (!novel.chapters || novel.chapters.length === 0) {
     return { label: 'ยังไม่มีตอน', min: novel.pricePerChapter || 0, max: novel.pricePerChapter || 0, allFree: false };
   }
@@ -1100,7 +1098,8 @@ function createNovelCardHTML(novel) {
   const isLiked = likedNovelIds.has(novel.id);
   const purchasedCount = novel.chapters.filter(c => hasAccess(novel.id, c)).length;
   const priceLabel = getNovelPriceInfo(novel).label;
-  const hasChapters = novel.chapters.length > 0;
+  const hasChapters = novel.chaptersLoaded && novel.chapters.length > 0;
+  const chapterLabel = novel.chaptersLoaded ? `${novel.chapters.length} ตอน` : 'ดูรายละเอียด';
   const statusBadge = novel.status === 'completed'
     ? `<span class="px-3 py-1 bg-blue-600 text-white text-[11px] font-bold rounded-full flex items-center gap-1">${icon('checkSquare', '')}จบแล้ว</span>`
     : `<span class="px-3 py-1 bg-amber-500 text-white text-[11px] font-bold rounded-full flex items-center gap-1">${icon('clock', '')}กำลังลง</span>`;
@@ -1123,13 +1122,13 @@ function createNovelCardHTML(novel) {
         <p class="text-xs text-slate-500 mb-2">ผู้แต่ง: ${novel.author}</p>
         <div class="flex flex-wrap gap-1 mb-3">${getNovelGenres(novel.genre).map(g => `<span class="px-2 py-1 bg-emerald-50 text-emerald-700 text-[10px] font-bold rounded-full">${escapeHtml(g)}</span>`).join('')}</div>
         <div class="flex flex-wrap gap-1 mb-3">
-          <span class="px-2 py-1 bg-blue-100 text-blue-800 text-[10px] font-bold rounded-full">${novel.chapters.length} ตอน</span>
+          <span class="px-2 py-1 bg-blue-100 text-blue-800 text-[10px] font-bold rounded-full">${chapterLabel}</span>
           <span class="px-2 py-1 bg-emerald-100 text-emerald-800 text-[10px] font-bold rounded-full">${priceLabel}</span>
         </div>
         <p class="text-xs text-slate-600 line-clamp-2 mb-4 flex-grow">${novel.synopsis}</p>
          ${hasChapters
            ? `<div class="flex gap-2"><button onclick="event.stopPropagation();openNovelReader('${novel.id}')" class="flex-1 px-3 py-2 bg-emerald-600 text-white text-sm font-semibold rounded-xl hover:bg-emerald-700 transition-all flex items-center justify-center gap-1">${icon('book', '')}เริ่มอ่าน</button><button onclick="event.stopPropagation();shareNovel('${novel.id}')" class="px-3 py-2 bg-blue-50 text-blue-700 rounded-xl" title="แชร์นิยาย">${icon('share', '')}</button></div>`
-           : `<div class="flex gap-2"><button disabled onclick="event.stopPropagation()" class="flex-1 px-3 py-2 bg-slate-200 text-slate-400 text-sm font-semibold rounded-xl cursor-not-allowed">ยังไม่มีตอน</button><button onclick="event.stopPropagation();shareNovel('${novel.id}')" class="px-3 py-2 bg-blue-50 text-blue-700 rounded-xl" title="แชร์นิยาย">${icon('share', '')}</button></div>`}
+           : `<div class="flex gap-2"><button onclick="event.stopPropagation();openNovelDetail('${novel.id}')" class="flex-1 px-3 py-2 bg-emerald-600 text-white text-sm font-semibold rounded-xl">ดูรายละเอียด</button><button onclick="event.stopPropagation();shareNovel('${novel.id}')" class="px-3 py-2 bg-blue-50 text-blue-700 rounded-xl" title="แชร์นิยาย">${icon('share', '')}</button></div>`}
       </div>
     </div>
   `;
@@ -1212,8 +1211,9 @@ function renderBookshelf(tab) {
 }
 
 let currentNovelDetailReturnPage = 'catalog';
-function openNovelDetail(novelId) {
+async function openNovelDetail(novelId) {
   const novel = novels.find(n => n.id === novelId); if (!novel) return;
+  if (!novel.chaptersLoaded) await refreshNovelChapters(novelId);
   currentNovelDetailReturnPage = [...document.querySelectorAll('.page-view')].find(el => !el.classList.contains('hidden'))?.id.replace('page-', '') || 'catalog';
   const price = getNovelPriceInfo(novel);
   document.getElementById('novel-detail-cover').src = novel.cover || '';
@@ -1234,9 +1234,10 @@ function openNovelDetail(novelId) {
 
 function closeNovelDetail() { navigateTo(currentNovelDetailReturnPage === 'novel-detail' ? 'catalog' : currentNovelDetailReturnPage); }
 
-function openNovelReader(novelId) {
+async function openNovelReader(novelId) {
   const novel = novels.find(n => n.id === novelId);
   if (!novel) return;
+  if (!novel.chaptersLoaded) await refreshNovelChapters(novelId);
 
   if (!novel.chapters || novel.chapters.length === 0) {
     showToast('นิยายเรื่องนี้ยังไม่มีตอนให้อ่าน', 'warning');

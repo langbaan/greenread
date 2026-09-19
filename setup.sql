@@ -534,8 +534,18 @@ where not exists (select 1 from public.coin_packages);
 -- 7) เปิด REALTIME บนตาราง orders
 -- ---------------------------------------------------------
 -- ให้หน้าเว็บ subscribe แล้วรู้ทันทีที่ webhook เติมเหรียญสำเร็จ (ไม่ต้องรอ poll)
--- ถ้ารันแล้วเจอ error ว่ามีอยู่แล้ว ("already member of publication") ข้ามได้เลย ไม่ใช่ปัญหา
-alter publication supabase_realtime add table public.orders;
+-- เพิ่ม orders เข้า Realtime เฉพาะเมื่อยังไม่มีอยู่ ป้องกัน error เมื่อนำไฟล์มารันซ้ำ
+do $$
+begin
+  if not exists (
+    select 1 from pg_publication_tables
+    where pubname = 'supabase_realtime'
+      and schemaname = 'public'
+      and tablename = 'orders'
+  ) then
+    alter publication supabase_realtime add table public.orders;
+  end if;
+end $$;
 
 -- ---------------------------------------------------------
 -- 8) ตั้งแอดมินคนแรก

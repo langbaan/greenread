@@ -1638,18 +1638,40 @@ function renderChapterManagerList() {
     return;
   }
 
-  list.innerHTML = adminChaptersCache.map(c => `
+  list.innerHTML = adminChaptersCache.map((c, index) => `
     <div class="flex items-center justify-between gap-2 p-3 bg-slate-50 rounded-xl border border-slate-100">
       <div class="min-w-0">
         <p class="font-semibold text-slate-800 text-sm truncate">ตอนที่ ${c.number}: ${c.title}</p>
         <span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${c.is_free ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}">${c.is_free ? 'อ่านฟรี' : ((c.price || 0) + ' เหรียญ')}</span>
       </div>
       <div class="flex gap-1 flex-shrink-0">
+        <button onclick="moveChapterInManager('${c.id}', -1)" ${index === 0 ? 'disabled' : ''} class="p-2 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg text-xs disabled:opacity-40 disabled:cursor-not-allowed" title="เลื่อนตอนขึ้น">↑</button>
+        <button onclick="moveChapterInManager('${c.id}', 1)" ${index === adminChaptersCache.length - 1 ? 'disabled' : ''} class="p-2 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg text-xs disabled:opacity-40 disabled:cursor-not-allowed" title="เลื่อนตอนลง">↓</button>
         <button onclick="editChapterInModal('${c.id}')" class="p-2 bg-amber-50 hover:bg-amber-100 text-amber-700 rounded-lg text-xs" title="แก้ไขตอนนี้">${icon('edit', '')}</button>
         <button onclick="deleteChapterInModal('${c.id}')" class="p-2 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg text-xs" title="ลบตอนนี้">${icon('trash', '')}</button>
       </div>
     </div>
   `).join('');
+}
+
+async function moveChapterInManager(chapterId, direction) {
+  const index = adminChaptersCache.findIndex(chapter => chapter.id === chapterId);
+  const targetIndex = index + direction;
+  if (index < 0 || targetIndex < 0 || targetIndex >= adminChaptersCache.length) return;
+
+  const reordered = [...adminChaptersCache];
+  [reordered[index], reordered[targetIndex]] = [reordered[targetIndex], reordered[index]];
+  const updates = reordered.map((chapter, position) => ({ id: chapter.id, number: position + 1 }));
+  const changed = updates.filter((update, position) => adminChaptersCache[position]?.id !== update.id);
+
+  const results = await Promise.all(changed.map(update => supabase.from('chapters').update({ number: update.number }).eq('id', update.id)));
+  const error = results.find(result => result.error)?.error;
+  if (error) { showToast('จัดลำดับตอนไม่สำเร็จ: ' + error.message, 'error'); return; }
+
+  adminChaptersCache = reordered.map((chapter, position) => ({ ...chapter, number: position + 1 }));
+  renderChapterManagerList();
+  await refreshNovelChapters(chapterManagerNovelId);
+  showToast('จัดลำดับตอนเรียบร้อยแล้ว', 'success');
 }
 
 function editChapterInModal(chapterId) {

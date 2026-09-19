@@ -473,17 +473,27 @@
         <input type="hidden" id="chapter-form-chapter-number" />
         <input type="number" id="chapter-form-number-input" placeholder="เลขตอน เช่น 1 (ถ้าเว้นว่าง ระบบอ่านจากชื่อบท)" min="1" class="w-full px-4 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-400" />
         <input type="text" id="chapter-form-title" placeholder="ชื่อตอน เช่น บทที่ 4: ผจญภัยครั้งใหม่" required class="w-full px-4 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-400" />
-        <div class="grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_auto] gap-2">
-          <input type="url" id="chapter-inline-image-url" placeholder="URL รูปที่จะแทรกในเนื้อหา" class="w-full min-w-0 px-3 py-2 border border-blue-200 rounded-lg text-sm" />
-          <button type="button" onclick="insertChapterInlineImage()" class="w-full sm:w-auto px-4 py-2 bg-blue-50 text-blue-700 rounded-lg text-xs font-semibold whitespace-nowrap">แทรกในเนื้อหา</button>
-          <button type="button" onclick="document.getElementById('chapter-inline-image-file').click()" class="w-full sm:w-auto px-4 py-2 bg-blue-50 text-blue-700 rounded-lg text-xs font-semibold whitespace-nowrap">อัปโหลดรูปแทรก</button>
-          <input type="file" id="chapter-inline-image-file" accept="image/*" class="hidden" onchange="uploadChapterInlineImage(event)" />
-          <input type="url" id="chapter-form-image-url" placeholder="URL รูปประกอบตอน (ไม่บังคับ)" class="w-full min-w-0 px-3 py-2 border border-slate-300 rounded-lg text-sm" />
-          <button type="button" onclick="document.getElementById('chapter-form-image-file').click()" class="w-full sm:w-auto px-4 py-2 bg-slate-100 text-slate-600 rounded-lg text-xs font-semibold whitespace-nowrap">อัปโหลดจากเครื่อง</button>
-          <input type="file" id="chapter-form-image-file" accept="image/*" class="hidden" onchange="handleChapterImageFileSelect(event)" />
-          <div class="flex items-center gap-2 sm:col-span-2">
-            <select id="chapter-form-image-position" class="flex-1 px-3 py-2 border border-slate-300 rounded-lg text-sm"><option value="before">แสดงก่อนเนื้อเรื่อง</option><option value="after">แสดงท้ายเนื้อเรื่อง</option></select>
-            <img id="chapter-form-image-preview" class="hidden w-12 h-12 object-cover rounded-lg border" alt="ตัวอย่างรูปประกอบ" />
+        <div class="space-y-4">
+          <div class="p-3 bg-blue-50/60 border border-blue-100 rounded-xl space-y-2">
+            <p class="text-sm font-bold text-blue-800">รูปในเนื้อหา</p>
+            <p class="text-xs text-slate-500">รูปจะแทรกตรงตำแหน่งเคอร์เซอร์ในช่องเนื้อหา</p>
+            <div class="grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_auto] gap-2">
+              <input type="url" id="chapter-inline-image-url" placeholder="วาง URL รูปภาพ" class="w-full min-w-0 px-3 py-2 border border-blue-200 rounded-lg text-sm" />
+              <button type="button" onclick="insertChapterInlineImage()" class="px-4 py-2 bg-blue-100 text-blue-700 rounded-lg text-xs font-semibold">แทรก URL ในเนื้อหา</button>
+              <button type="button" onclick="document.getElementById('chapter-inline-image-file').click()" class="sm:col-span-2 px-4 py-2 bg-white text-blue-700 border border-blue-200 rounded-lg text-xs font-semibold">อัปโหลดรูปจากเครื่องแล้วแทรก</button>
+              <input type="file" id="chapter-inline-image-file" accept="image/*" class="hidden" onchange="uploadChapterInlineImage(event)" />
+            </div>
+          </div>
+          <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-2">
+            <p class="text-sm font-bold text-slate-700">รูปประกอบตอน</p>
+            <p class="text-xs text-slate-500">รูปจะแสดงแยกจากเนื้อเรื่อง เลือกตำแหน่งได้</p>
+            <div class="grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_auto] gap-2">
+              <input type="url" id="chapter-form-image-url" placeholder="วาง URL รูปประกอบตอน (ไม่บังคับ)" class="w-full min-w-0 px-3 py-2 border border-slate-300 rounded-lg text-sm" />
+              <button type="button" onclick="document.getElementById('chapter-form-image-file').click()" class="px-4 py-2 bg-white text-slate-700 border border-slate-300 rounded-lg text-xs font-semibold">อัปโหลดรูปจากเครื่อง</button>
+              <input type="file" id="chapter-form-image-file" accept="image/*" class="hidden" onchange="handleChapterImageFileSelect(event)" />
+              <select id="chapter-form-image-position" class="sm:col-span-2 w-full px-3 py-2 border border-slate-300 rounded-lg text-sm"><option value="before">แสดงก่อนเนื้อเรื่อง</option><option value="after">แสดงท้ายเนื้อเรื่อง</option></select>
+              <img id="chapter-form-image-preview" class="hidden w-16 h-16 object-cover rounded-lg border" alt="ตัวอย่างรูปประกอบ" />
+            </div>
           </div>
         </div>
         <textarea id="chapter-form-content" oninput="updateChapterCharacterCount()" placeholder="เนื้อหาตอนนี้... (สามารถแทรกรูปภาพด้วยปุ่มด้านบนได้)" rows="5" required class="w-full px-4 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-400"></textarea>

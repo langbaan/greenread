@@ -1662,7 +1662,7 @@ async function openChapterManager(novelId) {
 
 async function loadAdminChaptersForNovel(novelId) {
   let usedHasImageColumn = true;
-  let result = await supabase.from('chapters').select('id,novel_id,number,title,is_free,price,has_image,created_at').eq('novel_id', novelId).order('number');
+  let result = await supabase.from('chapters').select('id,novel_id,number,title,is_free,price,has_image,image_url,created_at').eq('novel_id', novelId).order('number');
   if (result.error && /has_image|column .* does not exist/i.test(result.error.message || '')) {
     usedHasImageColumn = false;
     chaptersHasImageColumn = false;
@@ -1671,7 +1671,7 @@ async function loadAdminChaptersForNovel(novelId) {
   const { data, error } = result;
   if (error) { showToast('โหลดตอนไม่สำเร็จ: ' + error.message, 'error'); adminChaptersCache = []; return; }
   chaptersHasImageColumn = usedHasImageColumn;
-  adminChaptersCache = (data || []).map(chapter => ({ ...chapter, hasImage: chapter.has_image === true }));
+  adminChaptersCache = (data || []).map(chapter => ({ ...chapter, hasImage: chapter.has_image === true || Boolean(chapter.image_url) }));
 }
 
 function renderChapterManagerList() {

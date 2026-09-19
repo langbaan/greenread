@@ -425,6 +425,7 @@
         <div class="flex gap-2"><input type="text" id="form-genre-custom" placeholder="พิมพ์แนวใหม่ (ไม่บังคับ)" class="flex-1 min-w-0 px-4 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-400" /><button type="button" onclick="addCustomNovelGenre()" class="px-4 py-2 bg-emerald-50 text-emerald-700 rounded-xl font-semibold">เพิ่มแนว</button></div>
       </div>
       <input type="number" id="form-price-per-chapter" placeholder="ราคาต่อตอน (เหรียญ)" min="0" required class="w-full px-4 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-400" />
+      <div class="flex items-center gap-3"><label for="form-rating" class="font-semibold text-slate-700 whitespace-nowrap">คะแนนดาว</label><input type="number" id="form-rating" placeholder="เช่น 4.5" min="0" max="5" step="0.1" required class="w-full px-4 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-400" /><span class="text-amber-500 text-lg">★</span></div>
       <select id="form-status" class="w-full px-4 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-400">
         <option value="ongoing">ยังไม่จบ (กำลังลงตอนใหม่)</option>
         <option value="completed">จบแล้ว</option>
@@ -1545,6 +1546,7 @@ function openNovelModal(novelId = null) {
     document.getElementById('form-author').value = novel.author;
     populateNovelGenreOptions(getNovelGenres(novel.genre));
     document.getElementById('form-price-per-chapter').value = novel.pricePerChapter;
+    document.getElementById('form-rating').value = novel.rating || 0;
     document.getElementById('form-cover').value = novel.cover.startsWith('data:') ? '' : novel.cover;
     document.getElementById('form-status').value = novel.status || 'ongoing';
     document.getElementById('form-synopsis').value = novel.synopsis;
@@ -1556,6 +1558,7 @@ function openNovelModal(novelId = null) {
     title.textContent = 'เพิ่มนิยายเรื่องใหม่';
     document.getElementById('form-novel-id').value = '';
     document.getElementById('form-status').value = 'ongoing';
+    document.getElementById('form-rating').value = 0;
     document.getElementById('cover-preview').classList.add('hidden');
   }
   modal.classList.remove('hidden');
@@ -1642,6 +1645,7 @@ async function saveNovelForm(e) {
   const genre = [...new Set([...Array.from(document.querySelectorAll('.novel-genre-checkbox:checked'), el => el.value), ...customGenres])].join(' | ');
   if (!genre) { showToast('กรุณาเลือกหรือเพิ่มแนวนิยายอย่างน้อย 1 แนว', 'warning'); return; }
   const pricePerChapter = parseFloat(document.getElementById('form-price-per-chapter').value) || 0;
+  const rating = Math.min(5, Math.max(0, parseFloat(document.getElementById('form-rating').value) || 0));
   const typedCoverUrl = document.getElementById('form-cover').value.trim();
   const status = document.getElementById('form-status').value;
   const synopsis = document.getElementById('form-synopsis').value.trim();
@@ -1652,14 +1656,14 @@ async function saveNovelForm(e) {
     cover = existing ? existing.cover : createPlaceholderCoverDataUri(genre);
   }
 
-  const payload = { title, author, genre, price_per_chapter: pricePerChapter, cover_url: cover, status, synopsis };
+  const payload = { title, author, genre, price_per_chapter: pricePerChapter, rating, cover_url: cover, status, synopsis };
 
   if (id) {
     const { error } = await supabase.from('novels').update({ ...payload, updated_at: new Date().toISOString() }).eq('id', id);
     if (error) { showToast('อัปเดตนิยายไม่สำเร็จ: ' + error.message, 'error'); return; }
     showToast('อัปเดตนิยายเรียบร้อยแล้ว', 'success');
   } else {
-    const { error } = await supabase.from('novels').insert({ ...payload, rating: 4.5, view_count: 0 });
+    const { error } = await supabase.from('novels').insert({ ...payload, view_count: 0 });
     if (error) { showToast('เพิ่มนิยายไม่สำเร็จ: ' + error.message, 'error'); return; }
     showToast('เพิ่มนิยายเรียบร้อยแล้ว — กด "จัดการตอน" เพื่อเพิ่มตอนแรก', 'success');
   }

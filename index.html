@@ -1709,11 +1709,12 @@ async function openChapterManager(novelId) {
 
 async function loadAdminChaptersForNovel(novelId) {
   let usedHasImageColumn = true;
-  let result = await supabase.from('chapters').select('id,novel_id,number,title,is_free,price,has_image,image_url,created_at').eq('novel_id', novelId).order('number');
+  // รายการตอนใช้แค่ป้ายว่ามีรูป ไม่ต้องดึง URL/base64 ของรูปทุกตอน
+  let result = await supabase.from('chapters').select('id,novel_id,number,title,is_free,price,has_image,created_at').eq('novel_id', novelId).order('number');
   if (result.error && /has_image|column .* does not exist/i.test(result.error.message || '')) {
     usedHasImageColumn = false;
     chaptersHasImageColumn = false;
-    result = await supabase.from('chapters').select('id,novel_id,number,title,is_free,price,created_at').eq('novel_id', novelId).order('number');
+    result = await supabase.from('chapters').select('id,novel_id,number,title,is_free,price,image_url,created_at').eq('novel_id', novelId).order('number');
   }
   const { data, error } = result;
   if (error) { showToast('โหลดตอนไม่สำเร็จ: ' + error.message, 'error'); adminChaptersCache = []; return; }

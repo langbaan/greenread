@@ -1710,11 +1710,11 @@ async function openChapterManager(novelId) {
 async function loadAdminChaptersForNovel(novelId) {
   let usedHasImageColumn = true;
   // รายการตอนใช้แค่ป้ายว่ามีรูป ไม่ต้องดึง URL/base64 ของรูปทุกตอน
-  let result = await supabase.from('chapters').select('id,novel_id,number,title,is_free,price,has_image,created_at').eq('novel_id', novelId).order('number');
+  let result = await supabase.from('chapters').select('id,novel_id,number,title,is_free,price,has_image,review_status,created_at').eq('novel_id', novelId).order('number');
   if (result.error && /has_image|column .* does not exist/i.test(result.error.message || '')) {
     usedHasImageColumn = false;
     chaptersHasImageColumn = false;
-    result = await supabase.from('chapters').select('id,novel_id,number,title,is_free,price,image_url,created_at').eq('novel_id', novelId).order('number');
+    result = await supabase.from('chapters').select('id,novel_id,number,title,is_free,price,image_url,review_status,created_at').eq('novel_id', novelId).order('number');
   }
   const { data, error } = result;
   if (error) { showToast('โหลดตอนไม่สำเร็จ: ' + error.message, 'error'); adminChaptersCache = []; return; }
@@ -1733,16 +1733,28 @@ function renderChapterManagerList() {
     <div class="flex items-center justify-between gap-2 p-3 bg-slate-50 rounded-xl border border-slate-100">
       <div class="min-w-0">
         <p class="font-semibold text-slate-800 text-sm truncate">${index + 1}: ${c.title}</p>
-        <div class="flex flex-wrap items-center gap-1"><span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${c.is_free ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}">${c.is_free ? 'อ่านฟรี' : ((c.price || 0) + ' เหรียญ')}</span>${c.hasImage ? '<span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">มีรูป</span>' : ''}</div>
+        <div class="flex flex-wrap items-center gap-1"><span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${c.is_free ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}">${c.is_free ? 'อ่านฟรี' : ((c.price || 0) + ' เหรียญ')}</span><span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${c.review_status === 'approved' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-700'}">${c.review_status === 'approved' ? 'อนุมัติแล้ว' : 'ฉบับร่าง'}</span>${c.hasImage ? '<span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">มีรูป</span>' : ''}</div>
       </div>
       <div class="flex gap-1 flex-shrink-0">
         <button onclick="moveChapterInManager('${c.id}', -1)" ${index === 0 ? 'disabled' : ''} class="p-2 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg text-xs disabled:opacity-40 disabled:cursor-not-allowed" title="เลื่อนตอนขึ้น">↑</button>
         <button onclick="moveChapterInManager('${c.id}', 1)" ${index === adminChaptersCache.length - 1 ? 'disabled' : ''} class="p-2 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg text-xs disabled:opacity-40 disabled:cursor-not-allowed" title="เลื่อนตอนลง">↓</button>
+        <button onclick="toggleChapterApproval('${c.id}', '${c.review_status === 'approved' ? 'draft' : 'approved'}')" class="px-2 py-1 ${c.review_status === 'approved' ? 'bg-slate-100 text-slate-700' : 'bg-emerald-50 text-emerald-700'} rounded-lg text-[11px] font-semibold" title="${c.review_status === 'approved' ? 'เปลี่ยนกลับเป็นฉบับร่าง' : 'อนุมัติตอนนี้'}">${c.review_status === 'approved' ? 'ยกเลิกอนุมัติ' : 'อนุมัติ'}</button>
         <button onclick="editChapterInModal('${c.id}')" class="p-2 bg-amber-50 hover:bg-amber-100 text-amber-700 rounded-lg text-xs" title="แก้ไขตอนนี้">${icon('edit', '')}</button>
         <button onclick="deleteChapterInModal('${c.id}')" class="p-2 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg text-xs" title="ลบตอนนี้">${icon('trash', '')}</button>
       </div>
     </div>
   `).join('');
+}
+
+async function toggleChapterApproval(chapterId, nextStatus) {
+  const label = nextStatus === 'approved' ? 'อนุมัติตอนนี้' : 'เปลี่ยนกลับเป็นฉบับร่าง';
+  if (!confirm(`${label}?`)) return;
+  const { error } = await supabase.from('chapters').update({ review_status: nextStatus }).eq('id', chapterId);
+  if (error) { showToast('เปลี่ยนสถานะไม่สำเร็จ: ' + error.message, 'error'); return; }
+  await loadAdminChaptersForNovel(chapterManagerNovelId);
+  renderChapterManagerList();
+  await refreshNovelChapters(chapterManagerNovelId);
+  showToast(nextStatus === 'approved' ? 'อนุมัติตอนแล้ว ตอนนี้จะแสดงบนเว็บไซต์' : 'เปลี่ยนเป็นฉบับร่างแล้ว', 'success');
 }
 
 async function moveChapterInManager(chapterId, direction) {
@@ -1775,7 +1787,7 @@ async function moveChapterInManager(chapterId, direction) {
 async function editChapterInModal(chapterId) {
   const chapter = adminChaptersCache.find(c => c.id === chapterId);
   if (!chapter) return;
-  const { data, error } = await supabase.from('chapters').select('content,image_url,image_position').eq('id', chapterId).single();
+  const { data, error } = await supabase.from('chapters').select('content,image_url,image_position,review_status').eq('id', chapterId).single();
   if (error) { showToast('โหลดเนื้อหาตอนไม่สำเร็จ: ' + error.message, 'error'); return; }
   document.getElementById('chapter-form-heading').textContent = `แก้ไขตอนที่ ${chapter.number}`;
   document.getElementById('chapter-form-chapter-number').value = chapter.id;
@@ -1960,7 +1972,7 @@ async function saveChapterForm(e) {
     if (error) { showToast('บันทึกไม่สำเร็จ: ' + error.message, 'error'); return; }
     showToast('บันทึกการแก้ไขตอนเรียบร้อยแล้ว', 'success');
   } else {
-    const payload = { novel_id: novel.id, number, title, content, image_url: imageUrl || null, image_position: imagePosition, is_free: isFree, price };
+    const payload = { novel_id: novel.id, number, title, content, image_url: imageUrl || null, image_position: imagePosition, is_free: isFree, price, review_status: 'draft' };
     if (chaptersHasImageColumn) payload.has_image = /<img\b/i.test(content) || Boolean(imageUrl);
     const { error } = await supabase.from('chapters').insert(payload);
     if (error) { showToast('เพิ่มตอนไม่สำเร็จ: ' + error.message, 'error'); return; }

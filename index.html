@@ -2198,6 +2198,8 @@ async function openTopUpModal() {
 }
 
 async function selectCoinPackage(packageId) {
+  unsubscribeOrderStatus();
+  currentOrderId = null;
   selectedCoinPackage = coinPackages.find(p => p.id === packageId);
   closeModal('topup-modal');
   document.getElementById('payment-pkg-label').textContent = `${selectedCoinPackage.coins.toLocaleString()} เหรียญ${selectedCoinPackage.bonus ? ' + ' + selectedCoinPackage.bonus + ' โบนัส' : ''}`;
@@ -2289,6 +2291,8 @@ async function handleOrderPaid(order) {
   await loadProfile();
   updateCoinsDisplay();
   closeModal('payment-modal');
+  currentOrderId = null;
+  qrPaymentRef = null;
   showToast(`ชำระเงินสำเร็จ! ได้รับ ${(order.coins + (order.bonus || 0)).toLocaleString()} เหรียญ 🎉`, 'success');
   if (!document.getElementById('page-admin').classList.contains('hidden')) initSalesStats();
   if (!document.getElementById('page-reader').classList.contains('hidden')) renderChapterBody();
@@ -2316,8 +2320,6 @@ async function confirmQrPayment() {
 }
 
 function cancelQrPayment() {
-  unsubscribeOrderStatus();
-  currentOrderId = null;
   closeModal('payment-modal');
   openTopUpModal();
 }
@@ -2339,9 +2341,8 @@ function closeModal(id) {
     document.getElementById('payment-qr-area').classList.add('hidden');
     document.getElementById('payment-qr-unavailable').classList.add('hidden');
     document.getElementById('payment-qr-loading').classList.add('hidden');
-    unsubscribeOrderStatus();
-    qrPaymentRef = null;
-    currentOrderId = null;
+    // ปิดหน้าต่างได้โดยไม่หยุดตรวจสอบรายการที่กำลังรอชำระเงิน
+    // เมื่อชำระสำเร็จ ระบบจะเติมเหรียญและแจ้งเตือนให้อัตโนมัติ
   }
 }
 window.addEventListener('click', (e) => {

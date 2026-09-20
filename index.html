@@ -988,7 +988,19 @@ function initAuthListener() {
 
 document.addEventListener('DOMContentLoaded', async () => {
   applyReaderTheme();
-  supabase.from('site_visits').insert({}).then(() => {}).catch(() => {});
+  // นับผู้เข้าชมแบบไม่ซ้ำในเบราว์เซอร์เดิม ไม่เพิ่มซ้ำเมื่อรีเฟรชหน้า
+  try {
+    const visitorKey = 'langbaan_unique_visitor_id';
+    let visitorId = localStorage.getItem(visitorKey);
+    if (!visitorId) {
+      visitorId = crypto.randomUUID();
+      localStorage.setItem(visitorKey, visitorId);
+      supabase.from('site_visits').insert({}).then(() => {}).catch(() => {});
+    }
+  } catch (error) {
+    // หากเบราว์เซอร์ไม่อนุญาต localStorage จะข้ามการนับเพื่อไม่ให้หน้าเว็บช้า/ล้ม
+    console.warn('ไม่สามารถบันทึกผู้เข้าชมซ้ำได้:', error);
+  }
   replaceStaticIcons();
   initAuthListener();
   updateAuthUI();

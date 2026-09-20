@@ -995,7 +995,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   navigateTo('home');
   // Show the shell immediately; load the independent datasets in the background.
   void loadNovels().then(() => updateCoinsDisplay());
-  void loadCoinPackages();
   updateCoinsDisplay();
 });
 
@@ -1019,7 +1018,7 @@ function navigateTo(pageId) {
   if (pageId === 'admin') { switchAdminTab('stats'); renderAdminNovelsTable(); renderAdminCoinPackages(); }
 
   document.getElementById('mobile-menu').classList.add('hidden');
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+  window.scrollTo({ top: 0, behavior: 'auto' });
 }
 
 function toggleMobileMenu() { document.getElementById('mobile-menu').classList.toggle('hidden'); }
@@ -2184,8 +2183,9 @@ function exportSalesTableCSV() {
   showToast('ดาวน์โหลด CSV เรียบร้อยแล้ว', 'success');
 }
 
-function openTopUpModal() {
+async function openTopUpModal() {
   if (!currentUser) { showToast('กรุณาเข้าสู่ระบบก่อนเติมเหรียญ', 'warning'); openAuthModal('login'); return; }
+  if (!coinPackages.length) await loadCoinPackages();
   document.getElementById('coin-packages-modal').innerHTML = coinPackages.filter(p => p.active !== false).map(pkg => `
     <button onclick="selectCoinPackage('${pkg.id}')" class="w-full p-4 text-left bg-gradient-to-r from-emerald-50 to-emerald-100 border-2 border-emerald-300 rounded-2xl hover:border-emerald-500 hover:shadow-lg transition-all">
       <div class="flex justify-between items-center">

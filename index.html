@@ -2274,8 +2274,19 @@ function subscribeOrderStatus(orderId) {
     .subscribe();
 
   orderPollInterval = setInterval(async () => {
-    const { data } = await supabase.from('orders').select('*').eq('id', orderId).single();
-    if (data?.status === 'paid') void handleOrderPaid(data);
+    try {
+      // ตรวจสอบกับผู้ให้บริการชำระเงินจริงด้วย ไม่พึ่งเฉพาะสถานะในฐานข้อมูล
+      const { ok, result } = await callEdgeFunction('clever-responder', { order_id: orderId });
+      if (!ok) return;
+      if (result.status === 'paid') {
+        const { data } = await supabase.from('orders').select('*').eq('id', orderId).single();
+        if (data?.status === 'paid') void handleOrderPaid(data);
+      } else if (result.status === 'failed' || result.status === 'expired') {
+        unsubscribeOrderStatus();
+      }
+    } catch (error) {
+      console.warn('ตรวจสอบสถานะออเดอร์ไม่สำเร็จชั่วคราว:', error);
+    }
   }, 4000);
 }
 

@@ -723,6 +723,7 @@ let pendingChapterImageDataUri = null;
 let currentOrderId = null;
 let orderRealtimeChannel = null;
 let orderPollInterval = null;
+const handledPaymentOrderIds = new Set();
 
 // ---------- DIAGNOSTIC BANNER — โชว์ error บนหน้าเว็บตรงๆ ไม่ต้องเปิด Console ----------
 function showDiagnostic(html) {
@@ -2296,6 +2297,8 @@ function unsubscribeOrderStatus() {
 }
 
 async function handleOrderPaid(order) {
+  if (!order?.id || handledPaymentOrderIds.has(order.id)) return;
+  handledPaymentOrderIds.add(order.id);
   unsubscribeOrderStatus();
   // โหลดจากฐานข้อมูลใหม่ทุกครั้ง เพื่อไม่ให้ยอดเดิมจากหน้าจอค้างอยู่
   currentProfile = null;

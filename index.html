@@ -495,7 +495,7 @@
               <input type="url" id="chapter-form-image-url" placeholder="วาง URL รูปประกอบตอน (ไม่บังคับ)" class="w-full min-w-0 px-3 py-2 border border-slate-300 rounded-lg text-sm" />
               <button type="button" onclick="document.getElementById('chapter-form-image-file').click()" class="px-4 py-2 bg-white text-slate-700 border border-slate-300 rounded-lg text-xs font-semibold">อัปโหลดรูปจากเครื่อง</button>
               <input type="file" id="chapter-form-image-file" accept="image/*" class="hidden" onchange="handleChapterImageFileSelect(event)" />
-              <select id="chapter-form-image-position" class="sm:col-span-2 w-full px-3 py-2 border border-slate-300 rounded-lg text-sm"><option value="before">แสดงก่อนเนื้อเรื่อง</option><option value="after">แสดงท้ายเนื้อเรื่อง</option></select>
+              <select id="chapter-form-image-position" class="sm:col-span-2 w-full px-3 py-2 border border-slate-300 rounded-lg text-sm"><option value="before">แสดงก่อนเนื้อเรื่อง</option><option value="after" selected>แสดงท้ายเนื้อเรื่อง</option></select>
               <div id="chapter-form-image-preview-wrap" class="hidden flex items-center gap-2">
                 <img id="chapter-form-image-preview" class="w-16 h-16 object-cover rounded-lg border" alt="ตัวอย่างรูปประกอบ" />
                 <button type="button" onclick="removeChapterImage()" class="px-3 py-2 bg-red-50 text-red-600 border border-red-100 rounded-lg text-xs font-semibold hover:bg-red-100">ลบรูป</button>
@@ -1787,7 +1787,7 @@ async function editChapterInModal(chapterId) {
   const imagePreview = document.getElementById('chapter-form-image-preview');
   imagePreview.src = data?.image_url || '';
   document.getElementById('chapter-form-image-preview-wrap').classList.toggle('hidden', !data?.image_url);
-  document.getElementById('chapter-form-image-position').value = data?.image_position || 'before';
+  document.getElementById('chapter-form-image-position').value = data?.image_position || 'after';
   updateChapterCharacterCount();
   document.getElementById('chapter-form-free').checked = !!chapter.is_free;
   document.getElementById('chapter-form-price').value = chapter.price || 0;
@@ -1799,6 +1799,8 @@ async function editChapterInModal(chapterId) {
 function cancelChapterEdit() {
   const form = document.getElementById('chapter-form');
   if (form) form.reset();
+  const imagePositionSelect = document.getElementById('chapter-form-image-position');
+  if (imagePositionSelect) imagePositionSelect.value = 'after';
   pendingChapterImageDataUri = null;
   const imagePreview = document.getElementById('chapter-form-image-preview');
   if (imagePreview) imagePreview.src = '';
